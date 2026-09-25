@@ -6,6 +6,8 @@ import com.microsoft.playwright.options.AriaRole;
 import com.microsoft.playwright.options.WaitForSelectorState;
 import io.qameta.allure.Step;
 
+import java.util.regex.Pattern;
+
 /**
  * Page Object for the Playwright Documentation Homepage
  */
@@ -49,7 +51,8 @@ public class PlaywrightDocsPage extends BasePage {
         this.docs = page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("Docs"));
         this.api = page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("API"));
         this.community = page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("Community"));
-        this.search = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Search (Command+K)"));
+        // The label includes the platform's shortcut key, e.g. "Search (Meta+k)", so match the prefix only
+        this.search = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(Pattern.compile("^Search")));
         this.searchModal = page.locator("div[class*='DocSearch'], div[class*='search'], div[role='dialog']").first();
         this.skipToContent = page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("Skip to main content"));
         this.getStartedButton = page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("Get started"));
@@ -63,10 +66,11 @@ public class PlaywrightDocsPage extends BasePage {
         this.typescriptLink = page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("TypeScript"));
         this.dotnetLink = page.locator("a[href='/dotnet/']");
 
-        // Initialize tool links - these are in the main content area, using text-based locators
-        this.codegenLink = page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("Codegen."));
-        this.playwrightInspectorLink = page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("Playwright inspector."));
-        this.traceViewerLink = page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("Trace Viewer."));
+        // Tool links in the docs sidebar; the homepage no longer links to every tool
+        Locator sidebar = page.locator("nav[aria-label='Docs sidebar']");
+        this.codegenLink = sidebar.locator("a[href='/java/docs/codegen-intro']");
+        this.playwrightInspectorLink = sidebar.locator("a[href='/java/docs/debug']");
+        this.traceViewerLink = sidebar.locator("a[href='/java/docs/trace-viewer-intro']");
     }
 
     /**
@@ -153,6 +157,7 @@ public class PlaywrightDocsPage extends BasePage {
      */
     @Step("Navigate to {tool}")
     public PlaywrightDocsPage navigateToTool(String tool) {
+        page.navigate(BASE_URL + "docs/intro");
         switch (tool.toLowerCase()) {
             case "codegen":
                 codegenLink.click();
