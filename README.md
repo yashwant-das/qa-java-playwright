@@ -21,7 +21,7 @@
   </p>
 
   <p>
-    <img src="https://github.com/yashwant-das/web-playwright-java-framework/actions/workflows/playwright.yml/badge.svg" alt="Playwright Tests"/>
+    <img src="https://github.com/yashwant-das/qa-java-playwright/actions/workflows/playwright.yml/badge.svg" alt="Playwright Tests"/>
   </p>
 
 </div>
@@ -70,7 +70,7 @@ A robust and maintainable **Java test automation framework** built with **Playwr
 ## Project Structure
 
 ```text
-web-playwright-java-framework/
+qa-java-playwright/
 │
 ├── .github/
 │   └── workflows/
@@ -160,8 +160,8 @@ mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="in
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/yashwant-das/web-playwright-java-framework.git
-   cd web-playwright-java-framework
+   git clone https://github.com/yashwant-das/qa-java-playwright.git
+   cd qa-java-playwright
    ```
 
 2. Install Playwright browser binaries:
@@ -184,8 +184,8 @@ Get up and running in minutes:
 
 ```bash
 # 1. Clone and setup
-git clone https://github.com/yashwant-das/web-playwright-java-framework.git
-cd web-playwright-java-framework
+git clone https://github.com/yashwant-das/qa-java-playwright.git
+cd qa-java-playwright
 mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install"
 
 # 2. Run your first test
@@ -537,7 +537,7 @@ mvn allure:serve
 **CI/CD Test Results:**
 
 The test results are automatically published to GitHub Pages after each CI/CD run. You can view them at:
-[https://yashwant-das.github.io/web-playwright-java-framework/](https://yashwant-das.github.io/web-playwright-java-framework/)
+[https://yashwant-das.github.io/qa-java-playwright/](https://yashwant-das.github.io/qa-java-playwright/)
 
 The report includes:
 
