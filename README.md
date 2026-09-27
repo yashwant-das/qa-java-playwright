@@ -797,7 +797,7 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 
-MIT License - feel free to use this as a template for your own test automation framework.
+MIT. See [LICENSE](LICENSE).
 
 ---
 
