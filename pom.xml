@@ -27,6 +27,8 @@
         <maven.compiler.plugin.version>3.12.1</maven.compiler.plugin.version>
         <maven.surefire.plugin.version>3.3.0</maven.surefire.plugin.version>
         <allure.maven.plugin.version>2.13.0</allure.maven.plugin.version>
+        <!-- TestNG suite to run; override with -DsuiteXmlFile=path/to/suite.xml -->
+        <suiteXmlFile>src/test/resources/suites/testng.xml</suiteXmlFile>
     </properties>
 
     <dependencies>
@@ -134,7 +136,7 @@
                 <version>${maven.surefire.plugin.version}</version>
                 <configuration>
                     <suiteXmlFiles>
-                        <suiteXmlFile>${project.basedir}/src/test/resources/suites/testng.xml</suiteXmlFile>
+                        <suiteXmlFile>${suiteXmlFile}</suiteXmlFile>
                     </suiteXmlFiles>
                     <argLine>
                         -javaagent:"${settings.localRepository}/org/aspectj/aspectjweaver/${aspectj.version}/aspectjweaver-${aspectj.version}.jar"

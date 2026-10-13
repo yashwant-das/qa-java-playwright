@@ -21,7 +21,7 @@ public class PlaywrightDocsNavigationTest extends PlaywrightTest {
     /**
      * Test 1: Verify basic navigation to the homepage and Get Started functionality
      */
-    @Test(description = "Verify homepage navigation and Get Started button")
+    @Test(description = "Verify homepage navigation and Get Started button", groups = "smoke")
     @Description("Navigates to the homepage and clicks the Get Started button")
     @Severity(SeverityLevel.BLOCKER)
     @Story("Homepage Navigation")
