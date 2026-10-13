@@ -21,6 +21,13 @@
         <listener class-name="io.github.mypixelquest.pja.listeners.RetryListener"/>
     </listeners>
 
+    <!-- Unit tests for the framework itself (no browser needed) -->
+    <test name="Framework Unit Tests">
+        <classes>
+            <class name="io.github.mypixelquest.pja.util.ConfigReaderOverrideTest"/>
+        </classes>
+    </test>
+
     <!-- Run all example tests demonstrating framework capabilities -->
     <test name="All Example Tests">
         <packages>

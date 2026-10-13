@@ -1,6 +1,8 @@
 package io.github.mypixelquest.pja.util;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.github.mypixelquest.pja.config.ConfigModel;
 import org.slf4j.Logger;
@@ -8,7 +10,10 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
+import java.util.Properties;
 
 /**
  * Singleton utility class for loading and accessing test configuration
@@ -48,12 +53,59 @@ public class ConfigReader {
                 throw new IOException("Configuration file not found: " + configFile);
             }
 
-            ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
-            config = mapper.readValue(inputStream, ConfigModel.class);
+            config = parse(inputStream, System.getProperties());
             log.info("Configuration loaded successfully for environment: {}", environment);
         } catch (IOException e) {
             log.error("Failed to load configuration", e);
             throw new RuntimeException("Failed to load configuration", e);
+        }
+    }
+
+    /**
+     * Parse a YAML configuration stream and apply property overrides to it.
+     * A setting is overridden by a property named after its YAML path,
+     * e.g. {@code browser.type} or {@code retry.maxRetries}.
+     *
+     * @param yaml      YAML configuration content
+     * @param overrides Properties that override YAML values
+     * @return ConfigModel containing the resulting settings
+     */
+    static ConfigModel parse(InputStream yaml, Properties overrides) throws IOException {
+        ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+        JsonNode root = mapper.readTree(yaml);
+        applyOverrides(root, "", overrides);
+        return mapper.treeToValue(root, ConfigModel.class);
+    }
+
+    /**
+     * Replace each YAML value that has an override property set for its path
+     */
+    private static void applyOverrides(JsonNode node, String pathPrefix, Properties overrides) {
+        if (!(node instanceof ObjectNode section)) {
+            return;
+        }
+
+        List<String> names = new ArrayList<>();
+        section.fieldNames().forEachRemaining(names::add);
+
+        for (String name : names) {
+            String path = pathPrefix + name;
+            JsonNode value = section.get(name);
+
+            if (value.isObject()) {
+                applyOverrides(value, path + ".", overrides);
+                continue;
+            }
+
+            String override = overrides.getProperty(path);
+            // -Dheadless is kept as a short form of -Dbrowser.headless
+            if (override == null && path.equals("browser.headless")) {
+                override = overrides.getProperty("headless");
+            }
+            if (override != null) {
+                log.info("Overriding {} from command line: {}", path, override);
+                section.put(name, override);
+            }
         }
     }
 
@@ -88,18 +140,10 @@ public class ConfigReader {
 
     /**
      * Check if browser should run in headless mode
-     * First checks if headless property is specified on command line,
-     * then falls back to configuration file
      *
      * @return True if headless, false otherwise
      */
     public boolean isHeadless() {
-        String headlessProperty = System.getProperty("headless");
-        if (headlessProperty != null) {
-            boolean headless = Boolean.parseBoolean(headlessProperty);
-            log.info("Using command line headless mode: {}", headless);
-            return headless;
-        }
         return config.getBrowser().isHeadless();
     }
 
