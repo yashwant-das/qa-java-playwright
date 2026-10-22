@@ -245,4 +245,3 @@ public class PlaywrightDocsPage extends BasePage {
         return this;
     }
 }
-

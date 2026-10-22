@@ -23,4 +23,3 @@ retry:
   enabled: true               # Enable retries to handle transient production issues
   maxRetries: 1               # Limited retries for production (avoid masking real issues)
   delayBetweenRetries: 2000   # Longer delay for production (allow system recovery)
-

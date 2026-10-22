@@ -231,7 +231,7 @@ The framework does not write an Allure environment file, so the report’s Envir
 **CI/CD Test Results:**
 
 The test results are published to GitHub Pages only after successful trusted-branch CI checks. Pull requests upload reports as artifacts without publishing them. You can view them at:
-[https://yashwant-das.github.io/qa-java-playwright/](https://yashwant-das.github.io/qa-java-playwright/)
+[Published Allure reports](https://yashwant-das.github.io/qa-java-playwright/)
 
 The published report is from the latest run on macOS, with a link to the Windows run. Each deployment replaces the previous one.
 
@@ -420,6 +420,8 @@ is used after setup. If dependencies or plugins change, rerun the online warmup.
 Hooks check staged text and config files for trailing whitespace, final newlines,
 merge conflicts and YAML/strict JSON/XML syntax. Two-space Markdown hard breaks
 are preserved. markdownlint-cli2 0.24.0 uses defaults with only MD013 disabled.
+A staged Markdown lint configuration change also parses that JSONC configuration
+while checking the README, so config-only commits cannot skip validation.
 Generated output and dependencies are excluded by path. Wrapper scripts remain
 upstream-generated files, with their provenance in the properties file.
 
@@ -439,10 +441,9 @@ Proposed required contexts for owner review:
 - `Run Tests (windows-latest)`
 - `Analyze (java-kotlin)`
 
-The browser jobs run controlled Chromium smoke and the complete public-site suite,
+The browser jobs run controlled Chromium, Firefox and WebKit smoke, plus the complete public-site suite,
 then upload Allure reports. Public-site failures remain failures; no job ignores
-them. Other browser binaries are installed, but installation alone is not evidence
-that Firefox or WebKit tests ran. `Deploy Report` runs only on successful `main`
+them. Each browser is exercised by the smoke suite; the public examples use Chromium. `Deploy Report` runs only on successful `main`
 checks from a non-PR event, writes only the existing `gh-pages` branch and retains
 the macOS/Windows report links. CI artifacts expire after three days.
 
@@ -504,3 +505,24 @@ child `cli.js install` process confirmed that startup side effect. Surefire now
 sets `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1`; setup installs browser binaries
 explicitly from the pinned Java package. This keeps the controlled run independent
 of download services after setup and makes missing-browser prerequisites visible.
+
+### Verification record
+
+Environment: macOS 27.0.1, Apple Silicon, Homebrew JDK 21.0.13; Maven 3.10.0.
+Baseline `f355b28`: 10/10 configuration units passed. The existing public/default
+suite ran 36 tests with retries and parallelism disabled and a 10-second browser
+timeout: 35 passed, `PlaywrightDocsNavigationTest.testSearch` timed out. That run
+is evidence of a baseline failure, not a waived gate.
+
+After compatible upgrades: the documented default `test -Dbrowser.headless=true`
+run, preserving the YAML’s retry and parallel settings, passed all 36 tests with
+zero failures, errors or skips. The explicit unit-only `clean verify` passed
+10/10 units and Checkstyle with zero violations. Controlled Chromium smoke passed
+2/2 tests with retries disabled, checking form submission, screenshots and
+per-method context storage isolation. No public page selectors were changed.
+
+The hooks passed on all maintained files. The initial hook run corrected existing
+trailing whitespace and missing/extra final newlines; source changes outside the
+new smoke package are only those formatting repairs. All relative documentation
+file targets resolve; Markdown and workflow syntax checks passed. Further native
+browser, clean-checkout and hosted results are recorded below as they complete.

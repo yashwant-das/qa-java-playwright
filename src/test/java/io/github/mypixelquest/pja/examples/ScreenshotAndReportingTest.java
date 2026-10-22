@@ -69,4 +69,3 @@ public class ScreenshotAndReportingTest extends PlaywrightTest {
         assertThat(page.content()).isNotEmpty();
     }
 }
-

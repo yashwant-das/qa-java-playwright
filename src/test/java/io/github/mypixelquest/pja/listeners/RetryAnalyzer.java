@@ -41,13 +41,13 @@ public class RetryAnalyzer implements IRetryAnalyzer {
 
         String testKey = getTestKey(result);
         int retryCount = retryCountMap.getOrDefault(testKey, 0);
-        
+
         if (retryCount < retryConfig.getMaxRetries()) {
             retryCount++;
             retryCountMap.put(testKey, retryCount);
-            log.info("Retrying test '{}' for the {} time (attempt {}/{})", 
+            log.info("Retrying test '{}' for the {} time (attempt {}/{})",
                     result.getName(), retryCount, retryCount + 1, retryConfig.getMaxRetries() + 1);
-            
+
             // Wait between retries if configured
             if (retryConfig.getDelayBetweenRetries() > 0) {
                 try {
@@ -57,13 +57,13 @@ public class RetryAnalyzer implements IRetryAnalyzer {
                     log.warn("Retry delay was interrupted", e);
                 }
             }
-            
+
             return true;
         }
-        
+
         // Clean up after max retries reached
         retryCountMap.remove(testKey);
-        log.warn("Test '{}' has reached maximum retry attempts ({}). Marking as failed.", 
+        log.warn("Test '{}' has reached maximum retry attempts ({}). Marking as failed.",
                 result.getName(), retryConfig.getMaxRetries());
         return false;
     }

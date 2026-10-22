@@ -3,12 +3,12 @@
 <!--
     Main TestNG Suite Configuration
     This suite runs all example tests in the framework.
-    
+
     Listeners:
     - ScreenshotListener: Automatically captures screenshots on test failure
     - TestConfigurationListener: Configures suite parameters and parallel execution from YAML config
     - RetryListener: Handles test retry mechanism based on configuration
-    
+
     Usage:
     - Run via Maven: mvn test
     - Run via IDE: Right-click on this file and select "Run"

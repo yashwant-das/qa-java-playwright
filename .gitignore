@@ -18,9 +18,6 @@ logs/
 npm-debug.log*
 
 # Maven
-.mvn/
-mvnw
-mvnw.cmd
 dependency-reduced-pom.xml
 
 # IDE - IntelliJ

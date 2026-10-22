@@ -109,4 +109,3 @@ public class DataDrivenTest extends PlaywrightTest {
         assertThat(version).isEqualTo("1.48.0");
     }
 }
-

@@ -176,4 +176,3 @@ public class ConfigReader {
         return screenshotConfig != null && screenshotConfig.isFullPage();
     }
 }
-

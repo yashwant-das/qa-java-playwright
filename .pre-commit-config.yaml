@@ -1,0 +1,33 @@
+minimum_pre_commit_version: '4.7.0'
+default_language_version:
+  node: 24.21.0
+exclude: ^(target/|logs/|node_modules/|\.allure/)
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: 3e8a8703264a2f4a69428a0aa4dcb512790b2c8c # v6.0.0
+    hooks:
+      - id: trailing-whitespace
+        args: [--markdown-linebreak-ext=md]
+      - id: end-of-file-fixer
+      - id: check-merge-conflict
+      - id: check-yaml
+      - id: check-json
+      - id: check-xml
+  - repo: https://github.com/DavidAnson/markdownlint-cli2
+    rev: 341e2a331ba578029e66c2e01183e7a6b5ca9ab4 # v0.24.0
+    hooks:
+      - id: markdownlint-cli2
+      - id: markdownlint-cli2
+        name: Validate Markdown lint configuration
+        files: ^\.markdownlint-cli2\.jsonc$
+        types: [file]
+        pass_filenames: false
+        args: [README.md]
+  - repo: local
+    hooks:
+      - id: java-static-analysis
+        name: Java style and static analysis (cached Maven)
+        entry: ./mvnw -o -B -ntp checkstyle:check
+        language: system
+        files: (\.java$|^pom\.xml$|^config/checkstyle\.xml$)
+        pass_filenames: false

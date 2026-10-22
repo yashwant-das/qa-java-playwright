@@ -3,20 +3,20 @@
 <!--
     Example TestNG Suite Configuration
     This suite demonstrates how to run specific tests for playwright.dev website.
-    
+
     This example includes only the PlaywrightDocsNavigationTest class which contains
     tests specifically designed for testing the playwright.dev documentation site.
-    
+
     Listeners:
     - ScreenshotListener: Automatically captures screenshots on test failure
     - TestConfigurationListener: Configures suite parameters and parallel execution from YAML config
     - RetryListener: Handles test retry mechanism based on configuration
-    
+
     Usage:
     - Run via Maven: mvn test -DsuiteXmlFile=src/test/resources/suites/example-suite.xml
     - Run via IDE: Right-click on this file and select "Run"
     - Environment can be set via system property: -Denvironment=qa (default: qa)
-    
+
     To add more test classes, add additional <class> elements within the <classes> tag.
 -->
 <suite name="Playwright.dev Documentation Test Suite" verbose="2">

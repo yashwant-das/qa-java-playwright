@@ -59,24 +59,24 @@ public class PlaywrightDocsNavigationTest extends PlaywrightTest {
             // The intro page should have content about getting started/installation
             // Wait for article content or main content area to be visible
             page.waitForSelector("article, main article, .markdown");
-            
+
             // Get the visible text content from the page body
             var bodyLocator = page.locator("body");
             var pageText = bodyLocator.textContent();
-            
+
             // Verify we're on the intro page by checking for common intro page text
             // The page should contain text about installation or getting started
             assertThat(pageText)
                     .as("Page text should not be null")
                     .isNotNull();
-            
+
             // Check if page contains installation-related keywords (case-insensitive)
             String lowerPageText = pageText.toLowerCase();
             boolean containsInstallationContent = lowerPageText.contains("installation") ||
                                                   lowerPageText.contains("getting started") ||
                                                   lowerPageText.contains("maven") ||
                                                   lowerPageText.contains("gradle");
-            
+
             assertThat(containsInstallationContent)
                     .as("Page should contain installation or getting started content")
                     .isTrue();
@@ -213,4 +213,3 @@ public class PlaywrightDocsNavigationTest extends PlaywrightTest {
         });
     }
 }
-

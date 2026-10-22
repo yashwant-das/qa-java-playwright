@@ -10,23 +10,24 @@
     <name>Web Playwright Java Framework</name>
 
     <properties>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
+        <maven.compiler.release>17</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <!-- Dependency versions -->
-        <playwright.version>1.48.0</playwright.version>
-        <testng.version>7.9.0</testng.version>
-        <allure.version>2.27.0</allure.version>
-        <aspectj.version>1.9.22</aspectj.version>
-        <slf4j.version>2.0.13</slf4j.version>
-        <logback.version>1.5.11</logback.version>
+        <playwright.version>1.64.0</playwright.version>
+        <testng.version>7.12.0</testng.version>
+        <allure.version>2.35.5</allure.version>
+        <aspectj.version>1.9.26</aspectj.version>
+        <slf4j.version>2.0.20</slf4j.version>
+        <logback.version>1.6.5</logback.version>
         <assertj.version>3.27.7</assertj.version>
-        <jackson.version>2.18.11</jackson.version>
-        <lombok.version>1.18.34</lombok.version>
+        <jackson.version>2.22.4</jackson.version>
+        <lombok.version>1.18.48</lombok.version>
         <!-- Plugin versions -->
-        <maven.compiler.plugin.version>3.12.1</maven.compiler.plugin.version>
-        <maven.surefire.plugin.version>3.3.0</maven.surefire.plugin.version>
-        <allure.maven.plugin.version>2.13.0</allure.maven.plugin.version>
+        <maven.compiler.plugin.version>3.16.0</maven.compiler.plugin.version>
+        <maven.surefire.plugin.version>3.5.6</maven.surefire.plugin.version>
+        <allure.maven.plugin.version>3.1.0</allure.maven.plugin.version>
+        <allure.report.version>2.46.1</allure.report.version>
+        <checkstyle.version>14.3.0</checkstyle.version>
         <!-- TestNG suite to run; override with -DsuiteXmlFile=path/to/suite.xml -->
         <suiteXmlFile>src/test/resources/suites/testng.xml</suiteXmlFile>
     </properties>
@@ -111,14 +112,13 @@
 
     <build>
         <plugins>
-            <!-- Maven Compiler Plugin for Java 17 -->
+            <!-- Build with JDK 21 while retaining the existing Java 17 API/bytecode target. -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>${maven.compiler.plugin.version}</version>
                 <configuration>
-                    <source>17</source>
-                    <target>17</target>
+                    <release>${maven.compiler.release}</release>
                     <annotationProcessorPaths>
                         <path>
                             <groupId>org.projectlombok</groupId>
@@ -141,6 +141,10 @@
                     <argLine>
                         -javaagent:"${settings.localRepository}/org/aspectj/aspectjweaver/${aspectj.version}/aspectjweaver-${aspectj.version}.jar"
                     </argLine>
+                    <!-- Browser installation is an explicit setup step, never a test side effect. -->
+                    <environmentVariables>
+                        <PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD>1</PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD>
+                    </environmentVariables>
                     <systemPropertyVariables>
                         <allure.results.directory>${project.build.directory}/allure-results</allure.results.directory>
                         <allure.link.issue.pattern>
@@ -159,8 +163,58 @@
                 <artifactId>allure-maven</artifactId>
                 <version>${allure.maven.plugin.version}</version>
                 <configuration>
-                    <reportVersion>${allure.version}</reportVersion>
+                    <reportVersion>${allure.report.version}</reportVersion>
+                    <reportDirectory>${project.build.directory}/site/allure-maven-plugin</reportDirectory>
                 </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <version>3.6.0</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>com.puppycrawl.tools</groupId>
+                        <artifactId>checkstyle</artifactId>
+                        <version>${checkstyle.version}</version>
+                    </dependency>
+                </dependencies>
+                <configuration>
+                    <configLocation>config/checkstyle.xml</configLocation>
+                    <includeTestSourceDirectory>true</includeTestSourceDirectory>
+                    <includeResources>false</includeResources>
+                    <includeTestResources>false</includeTestResources>
+                    <consoleOutput>true</consoleOutput>
+                    <failOnViolation>true</failOnViolation>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>java-static-analysis</id>
+                        <phase>verify</phase>
+                        <goals><goal>check</goal></goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-clean-plugin</artifactId>
+                <version>3.5.0</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>3.5.0</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.5.1</version>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.6.4</version>
+                <configuration><classpathScope>test</classpathScope></configuration>
             </plugin>
 
             <!-- Exec Maven Plugin for Playwright browser installation -->
