@@ -23,7 +23,7 @@ The `PlaywrightDocsNavigationTest` class demonstrates various interactions with 
 Or using the example suite:
 
 ```bash
-./mvnw test -DsuiteXmlFile=../src/test/resources/suites/example-suite.xml
+./mvnw test -DsuiteXmlFile=src/test/resources/suites/example-suite.xml
 ```
 
 ## Framework capabilities showcase tests

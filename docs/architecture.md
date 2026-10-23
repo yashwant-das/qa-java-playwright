@@ -25,6 +25,7 @@ src/test/resources/
   data/                           YAML, JSON and CSV example fixtures
   suites/                         default, example, unit and controlled smoke suites
   logback.xml                     console and rotating file logs
+scripts/                          staged Java style adapter
 docs/                             development, architecture and example catalog
 .github/                          CI, report publication and dependency updates
 target/, logs/, .allure/           ignored run/build output

@@ -10,6 +10,7 @@ repos:
         args: [--markdown-linebreak-ext=md]
       - id: end-of-file-fixer
       - id: check-merge-conflict
+        args: [--assume-in-merge]
       - id: check-yaml
       - id: check-json
       - id: check-xml
@@ -27,7 +28,7 @@ repos:
     hooks:
       - id: java-static-analysis
         name: Java style and static analysis (cached Maven)
-        entry: ./mvnw -o -B -ntp checkstyle:check
+        entry: bash scripts/check-java-style.sh
         language: system
-        files: (\.java$|^pom\.xml$|^config/checkstyle\.xml$)
-        pass_filenames: false
+        files: (\.java$|^pom\.xml$|^config/checkstyle\.xml$|^scripts/check-java-style\.sh$)
+        pass_filenames: true

@@ -74,7 +74,7 @@ effect during a test. No Node application or global Maven installation is requir
 ./mvnw test
 
 # Run example suite (playwright.dev tests only)
-./mvnw test -DsuiteXmlFile=../src/test/resources/suites/example-suite.xml
+./mvnw test -DsuiteXmlFile=src/test/resources/suites/example-suite.xml
 ```
 
 **Test Filtering:**
@@ -120,7 +120,7 @@ An override must be valid for the setting's type. A non-numeric value for a nume
 
 ## Configuration
 
-The framework uses YAML configuration files located in `../src/test/resources/config/` as the single source of truth for all configuration settings.
+The framework uses YAML configuration files located in `src/test/resources/config/` as the single source of truth for all configuration settings.
 
 ### Configuration Files
 
@@ -273,7 +273,7 @@ Default log levels are configured as follows:
 
 ### Customizing Logging
 
-You can modify logging behavior by editing `../src/test/resources/logback.xml`:
+You can modify logging behavior by editing `src/test/resources/logback.xml`:
 
 - Change log levels
 - Modify rotation policies
@@ -380,8 +380,8 @@ and are not redirected merely by changing `environment.baseUrl`.
 
 **Configuration Errors:**
 
-- Verify `../src/test/resources/config/*.yaml` files exist and are valid YAML
-- Check `../src/test/resources/data/*` files are valid
+- Verify `src/test/resources/config/*.yaml` files exist and are valid YAML
+- Check `src/test/resources/data/*` files are valid
 
 **Import Errors:**
 
@@ -425,12 +425,14 @@ while checking the README, so config-only commits cannot skip validation.
 Generated output and dependencies are excluded by path. Wrapper scripts remain
 upstream-generated files, with their provenance in the properties file.
 
-When Java, the POM or Checkstyle configuration is staged, Checkstyle checks the
-small complete Java source set against the staged snapshot, including unchanged
-files. It checks tabs, final newlines, modifier order, empty statements, equals/
-hashCode pairs, fall-through, top-level classes and catches of Error/Throwable.
-This avoids a custom staged-path adapter; it is neither full compilation nor a
-security analyzer. `verify` runs it independently. Fix and restage any hook edits;
+For a Java-only commit, the staged-path adapter passes those source-relative
+files to Checkstyle. A staged POM, Checkstyle config or adapter change checks all
+tracked Java sources from `git ls-files`; unfinished untracked drafts are excluded.
+Pre-commit hides unstaged tracked edits while checking the index snapshot. The
+rules check tabs, final newlines, modifier order, empty statements, equals/hashCode
+pairs, fall-through, top-level classes and catches of Error/Throwable. This is
+neither full compilation nor a security analyzer. CI `verify` checks full source
+roots independently in its clean checkout. Fix and restage any hook edits;
 never bypass a failed gate. CI runs the same hook configuration on all tracked
 files, plus compilation and unit tests on Linux.
 
@@ -444,7 +446,7 @@ Proposed required contexts for owner review:
 The browser jobs run controlled Chromium, Firefox and WebKit smoke, plus the complete public-site suite,
 then upload Allure reports. Public-site failures remain failures; no job ignores
 them. Each browser is exercised by the smoke suite; the public examples use Chromium. `Deploy Report` runs only on successful `main`
-checks from a non-PR event, writes only the existing `gh-pages` branch and retains
+quality, browser and CodeQL checks from a non-PR event, writes only the existing `gh-pages` branch and retains
 the macOS/Windows report links. CI artifacts expire after three days.
 
 Weekly Maven and action update PRs are configured in
@@ -453,14 +455,15 @@ SHA-pinned; test jobs have read-only permissions and bounded runtimes. Account
 protection and deployment-environment changes require owner approval; workflow
 presence alone does not enforce these checks for merging. The public repository
 had no rulesets and an unprotected `main` at audit; no account settings were
-changed. A CodeQL workflow compiles the test-source framework for analysis; its
-hosted result is separate evidence, not a locally verified claim.
+changed. The CodeQL job compiles the test-source framework for analysis and also gates
+report publication; its hosted result is separate evidence, not a locally verified claim.
 
 ## Standards adoption
 
 Target: [repo-standards c00f280a94c5289aba795d240aaa963e7c886ed2](https://github.com/yashwant-das/repo-standards/tree/c00f280a94c5289aba795d240aaa963e7c886ed2),
 `complete` documentation profile. Audit: 2026-10-22, default branch `f355b28`.
-Documentation: in progress. Structure/dependencies and hooks/CI: pending.
+Documentation: verified locally. Structure/dependencies and hooks/CI: implemented;
+local checks and outstanding integration evidence are detailed below.
 Publication: pending PR review and merge; local verification is not published
 adoption or enforced merge protection.
 
@@ -526,3 +529,40 @@ trailing whitespace and missing/extra final newlines; source changes outside the
 new smoke package are only those formatting repairs. All relative documentation
 file targets resolve; Markdown and workflow syntax checks passed. Further native
 browser, clean-checkout and hosted results are recorded below as they complete.
+
+### Final review and resumed verification (2026-10-23)
+
+The independent branch review found three issues, all corrected in one pass:
+conflict markers outside merge state, incorrect root-relative suite commands in
+moved guides, and untracked Java drafts affecting staged commits. The marker and
+untracked-draft failures were reproduced before correction. The staged Java
+adapter now selects index paths; full CI analysis remains independent. CodeQL
+also explicitly gates report deployment in the same workflow.
+
+Sixteen real Git commit probes passed in a disposable checkout. They cover valid
+Markdown hard breaks, invalid Markdown, whitespace/newlines, conflict markers,
+strict JSON including rejected comments, YAML/XML syntax, invalid staged Java,
+config-only JSONC parsing, valid JSONC comments, Java/POM commits with an unrelated
+invalid untracked Java draft, and partially staged Markdown/Java that preserve
+unstaged edits. No hooks were bypassed. Shell syntax, documentation file targets
+and root-relative suite paths were checked.
+
+Fresh JDK 21 verification passed the 10 offline units and Checkstyle, controlled
+Chromium (2/2), and controlled WebKit (2/2). Firefox 157.0 / Playwright build 1555
+fails during native startup on this macOS 27.0.1 host with “Could not find profile
+folder”; both browser tests are skipped after setup failure. A second run using
+canonical `/private/tmp` reproduced it. This is a failed local run, not a pass or
+an approved exception. Its symptoms match the upstream
+[macOS 27 Firefox app-data issue](https://github.com/microsoft/playwright/issues/42768)
+and [Mozilla startup diagnostic](https://bugzilla.mozilla.org/show_bug.cgi?id=2062988);
+the host-specific cause has not been independently proven here. No host privacy
+settings were changed. Keep the Firefox CI run enabled on macOS 14 and Windows;
+those hosted results and a future working local Firefox run remain outstanding.
+Owner: Yashwant Das. Review when the upstream issue or host/browser changes.
+
+The earlier clean-checkout verification passed unit/static checks and Chromium
+smoke, then generated an Allure report with 12 passing results and valid result
+JSON. An interrupted exploratory run had left an empty container in the primary
+checkout; the clean checkout had no such parse error. Hosted CI, CodeQL, Windows,
+macOS 14, Java 17 runtime execution and merge protection are separate outstanding
+evidence. No adoption stage is represented as published on `main`.
