@@ -3,7 +3,7 @@
 <suite name="Framework unit tests">
     <test name="Configuration overrides">
         <classes>
-            <class name="io.github.mypixelquest.pja.util.ConfigReaderOverrideTest"/>
+            <class name="com.qaframework.playwright.util.ConfigReaderOverrideTest"/>
         </classes>
     </test>
 </suite>

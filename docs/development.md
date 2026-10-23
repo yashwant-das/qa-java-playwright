@@ -266,7 +266,7 @@ The framework provides comprehensive logging with automatic timestamping:
 
 Default log levels are configured as follows:
 
-- Framework code (io.github.mypixelquest.pja): DEBUG
+- Framework code (com.qaframework.playwright): DEBUG
 - TestNG: INFO
 - Playwright: INFO
 - Root logger: INFO
@@ -566,3 +566,27 @@ JSON. An interrupted exploratory run had left an empty container in the primary
 checkout; the clean checkout had no such parse error. Hosted CI, CodeQL, Windows,
 macOS 14, Java 17 runtime execution and merge protection are separate outstanding
 evidence. No adoption stage is represented as published on `main`.
+
+### Approved namespace migration (2026-10-23)
+
+The owner selected the neutral `com.qaframework.<project>` convention. This
+repository now uses Maven group `com.qaframework` and Java base package
+`com.qaframework.playwright`; the artifact ID stays `qa-java-playwright`.
+All 22 Java source paths/declarations/imports, TestNG listener/class/package
+references, the logger prefix and current documentation were migrated together.
+The earlier source-change description above applies to the initial adoption;
+this follow-up additionally changes package identity without changing test logic.
+
+After a clean compile, all 10 offline unit tests and Checkstyle passed. Controlled
+Chromium and WebKit smoke each passed 2/2; the default/public suite passed 36/36
+with no failures, errors or skips. All-file hooks passed. Every Java package
+matched its source path, all suite class/package references resolved, and active
+sources/configuration/docs contained no obsolete namespace. The prior Firefox
+host limitation and separate Java 17 runtime evidence remain outstanding.
+
+The first namespace commit was correctly blocked by the hook: pre-commit split
+the many Java/config paths into concurrent Maven batches, which collided on
+`target/checkstyle-result.xml`. Mark the Java hook `require_serial: true` so its
+batches share Maven’s output sequentially. This fixes the observed report parse
+failure without bypassing checks or changing style rules; the full staged rename
+is the regression case. No application tests or runtime settings were changed.

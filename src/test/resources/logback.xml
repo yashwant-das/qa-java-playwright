@@ -22,7 +22,7 @@
     </appender>
 
     <!-- Loggers -->
-    <logger name="io.github.mypixelquest.pja" level="DEBUG"/>
+    <logger name="com.qaframework.playwright" level="DEBUG"/>
     <logger name="org.testng" level="INFO"/>
     <logger name="com.microsoft.playwright" level="INFO"/>
 

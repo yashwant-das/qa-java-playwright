@@ -2,12 +2,12 @@
 <!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
 <suite name="Controlled browser smoke">
     <listeners>
-        <listener class-name="io.github.mypixelquest.pja.listeners.TestConfigurationListener"/>
-        <listener class-name="io.github.mypixelquest.pja.listeners.RetryListener"/>
+        <listener class-name="com.qaframework.playwright.listeners.TestConfigurationListener"/>
+        <listener class-name="com.qaframework.playwright.listeners.RetryListener"/>
     </listeners>
     <test name="Local form and context isolation">
         <classes>
-            <class name="io.github.mypixelquest.pja.smoke.BrowserSmokeTest"/>
+            <class name="com.qaframework.playwright.smoke.BrowserSmokeTest"/>
         </classes>
     </test>
 </suite>

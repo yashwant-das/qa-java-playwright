@@ -21,14 +21,14 @@
 -->
 <suite name="Playwright.dev Documentation Test Suite" verbose="2">
     <listeners>
-        <listener class-name="io.github.mypixelquest.pja.listeners.ScreenshotListener"/>
-        <listener class-name="io.github.mypixelquest.pja.listeners.TestConfigurationListener"/>
-        <listener class-name="io.github.mypixelquest.pja.listeners.RetryListener"/>
+        <listener class-name="com.qaframework.playwright.listeners.ScreenshotListener"/>
+        <listener class-name="com.qaframework.playwright.listeners.TestConfigurationListener"/>
+        <listener class-name="com.qaframework.playwright.listeners.RetryListener"/>
     </listeners>
 
     <test name="Playwright.dev Navigation Tests">
         <classes>
-            <class name="io.github.mypixelquest.pja.examples.PlaywrightDocsNavigationTest">
+            <class name="com.qaframework.playwright.examples.PlaywrightDocsNavigationTest">
                 <methods>
                     <include name="testHomePageNavigation"/>
                     <include name="testJavaDocumentation"/>

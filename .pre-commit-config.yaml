@@ -32,3 +32,4 @@ repos:
         language: system
         files: (\.java$|^pom\.xml$|^config/checkstyle\.xml$|^scripts/check-java-style\.sh$)
         pass_filenames: true
+        require_serial: true

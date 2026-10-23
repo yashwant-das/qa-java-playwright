@@ -5,13 +5,21 @@
 This is a test-only Maven framework. Reusable infrastructure and examples live
 under `src/test`; there is no application artifact or `src/main` layer.
 
+## Namespace
+
+Maven group: `com.qaframework`. Base package: `com.qaframework.playwright`.
+The neutral owner-approved convention is `com.qaframework.<project>` with a
+short descriptive project segment and existing functional subpackages. The
+artifact ID remains `qa-java-playwright`; source paths, TestNG suite/listener
+names and the framework logger use the same base package.
+
 ## Project Structure
 
 ```text
 pom.xml                           dependency/build sources of truth
 mvnw, mvnw.cmd, .mvn/wrapper/     checksum-pinned Maven distribution
 config/checkstyle.xml             Java static analysis rules
-src/test/java/io/github/mypixelquest/pja/
+src/test/java/com/qaframework/playwright/
   core/                           per-thread browser, per-method context lifecycle
   config/                         YAML model
   util/                           configuration loading, overrides and unit tests
