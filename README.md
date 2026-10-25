@@ -134,7 +134,7 @@ Playwright package before selecting them with `-Dbrowser.type`.
 
 `verify` compiles the test-only framework, runs configuration unit tests and Java
 static analysis. The smoke suite additionally proves real-browser behavior on
-controlled pages. The public-site suite exercises Playwright docs, Selenium’s web form and example.com.
+controlled pages. The public-site suite exercises Playwright docs, Selenium’s web form, example.com and httpbin.org.
 CI runs quality/unit checks on Linux, controlled checks in all three browsers and
 public examples on macOS/Windows, plus CodeQL. Native-host execution remains
 separate evidence; a compile or discovered test count proves neither.

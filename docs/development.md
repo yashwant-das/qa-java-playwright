@@ -631,3 +631,15 @@ links and Markdown anchors resolve. The report PNG was inspected after capture
 and shows 12/12 passing cases without unrelated cached history. Markdown lint and
 whole-file hooks use the existing pinned configuration. No new validator or test
 suite was added for the documentation layout.
+
+The pinned standards tree and published report URLs returned HTTP 200 during
+link review. Representative Shields.io badge requests returned HTTP 403 from
+this host, so live badge rendering was not verified here; the README uses the
+standard Shields.io endpoint syntax. New-head GitHub checks must be assessed
+separately from the prior-head results above.
+
+Independent documentation review found no material requirement or source-accuracy
+issues. Its minor public-service-list omission was corrected in the README and
+architecture guide: a bundled parallel example also calls httpbin.org. Review
+scope excluded changes to existing browser teardown, public-site test behavior,
+hosted native execution and account settings; those limits remain explicit above.

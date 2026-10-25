@@ -205,7 +205,8 @@ initialized once per JVM, so select the environment before starting Maven.
 the common data directory and caches parsed data. Fixture values are examples,
 not credentials for real services.
 
-The public examples contact playwright.dev, selenium.dev and example.com. Their
+The public examples contact playwright.dev, selenium.dev, example.com and
+httpbin.org. Their
 availability and page structure are outside this repository’s control. The local
 smoke suite instead serves HTML through Playwright routing and uses `about:blank`
 for initial setup; it exercises a real browser without public-site dependencies.
