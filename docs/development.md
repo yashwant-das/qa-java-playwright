@@ -201,7 +201,7 @@ Or override at runtime:
 
 ## Reports
 
-The framework generates comprehensive test reports using Allure:
+Allure reports include:
 
 ### Allure Reports
 
@@ -246,7 +246,7 @@ Screenshots are automatically captured and attached to reports:
 
 ## Logging
 
-The framework provides comprehensive logging with automatic timestamping:
+Logging writes to:
 
 - **Test Execution Logs**: `logs/playwright-tests.log`
 - **Archived Logs**: `logs/archived/playwright-tests.YYYY-MM-DD.i.log`
@@ -282,7 +282,7 @@ You can modify logging behavior by editing `src/test/resources/logback.xml`:
 
 ## Test data
 
-The framework provides comprehensive test data management capabilities:
+TestDataManager supports the fixture formats and examples below:
 
 ### Supported Data Formats
 
@@ -460,7 +460,7 @@ report publication; its hosted result is separate evidence, not a locally verifi
 
 ## Standards adoption
 
-Target: [repo-standards c00f280a94c5289aba795d240aaa963e7c886ed2](https://github.com/yashwant-das/repo-standards/tree/c00f280a94c5289aba795d240aaa963e7c886ed2),
+Target: [repo-standards 073f51ff68ec050f6b3372c46bc3bd4e721a5342](https://github.com/yashwant-das/repo-standards/tree/073f51ff68ec050f6b3372c46bc3bd4e721a5342),
 `complete` documentation profile. Audit: 2026-10-22, default branch `f355b28`.
 Documentation: verified locally. Structure/dependencies and hooks/CI: implemented;
 local checks and outstanding integration evidence are detailed below.
@@ -590,3 +590,44 @@ the many Java/config paths into concurrent Maven batches, which collided on
 batches share Maven’s output sequentially. This fixes the observed report parse
 failure without bypassing checks or changing style rules; the full staged rename
 is the regression case. No application tests or runtime settings were changed.
+
+### Showcase standards rework (2026-10-25)
+
+Adopted the merged standards revision `073f51ff68ec050f6b3372c46bc3bd4e721a5342`
+for the `complete` profile. Restore landing-page depth: Shields.io badges,
+concrete capabilities, an inline execution diagram, structure/stack summaries,
+template adaptation steps and a local Allure preview. Keep detailed setup and
+rollout history here rather than in the root README. Add the TestNG/context
+lifecycle sequence to the architecture guide and remove unsupported promotional
+wording from maintained guides. Runtime, dependency, hook and workflow files
+were unchanged by this documentation rework.
+
+The preview was generated from a clean build followed by `unit.xml` (10/10) and
+controlled Chromium `smoke.xml` with `-Denvironment=local` (2/2), then
+`./mvnw -o -B -ntp allure:report -Dallure.history.enabled=false`. It is a scoped
+local example, not a screenshot of the full public-site suite or hosted CI.
+The editable Mermaid source stays inline in each Markdown document.
+
+At prior head `0274192`, hosted quality/unit checks, Windows browser tests and
+CodeQL succeeded. macOS 14 timed out after 25 minutes while launching WebKit in
+the controlled smoke suite; its log warns that this host receives a frozen WebKit
+build. The public-site step on that job was not reached. Report deployment was
+skipped as expected for a PR. This is outstanding macOS evidence, not a passing
+matrix or an authorized exception. Keep that check enabled for the new revision.
+The separately documented local Firefox/macOS 27 failure remains outstanding.
+
+Metadata audit: the current description is 97 characters without a trailing
+period, but omits the starter-template qualifier. Proposed description for owner
+review: `Tests browser flows with Java, Playwright and TestNG, with Allure reports (starter template)`.
+Proposed topics, grouped by category/language/tools/technique:
+`test-automation`, `java`, `playwright`, `testng`, `allure-report`, `web-testing`.
+The topic set already matches; no repository metadata or account settings were
+changed. Native GitHub topic display order is not evidence of policy ordering.
+
+Validation for this rework: both inline diagrams rendered successfully with
+Mermaid 12.2.0 in Chromium and were visually inspected; a sequence-label semicolon
+that initially caused a parse error was corrected. All maintained local file
+links and Markdown anchors resolve. The report PNG was inspected after capture
+and shows 12/12 passing cases without unrelated cached history. Markdown lint and
+whole-file hooks use the existing pinned configuration. No new validator or test
+suite was added for the documentation layout.

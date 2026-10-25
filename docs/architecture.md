@@ -167,10 +167,36 @@ public class PlaywrightDocsNavigationTest extends PlaywrightTest {
 
 ## Execution and boundaries
 
+```mermaid
+sequenceDiagram
+    participant Suite as TestNG suite
+    participant Config as Suite / retry listeners
+    participant Base as PlaywrightTest
+    participant PW as Playwright and browser
+    participant Test as Test method / page object
+    participant Report as Allure and screenshots
+    Suite->>Config: Load YAML, apply overrides, configure suite
+    loop Each test method on its worker
+        Suite->>Base: BeforeMethod
+        Base->>PW: Reuse worker handles, create context and page
+        Base->>PW: Set timeout and navigate to configured base URL
+        Suite->>Test: Run assertions and page interactions
+        Test-->>Report: TestNG results and AspectJ steps
+        opt Method fails
+            Suite->>Report: Screenshot listener captures current page
+        end
+        Suite->>Base: AfterMethod
+        Base->>PW: Close page and context
+    end
+    Suite->>Base: AfterSuite cleanup on teardown thread
+```
+
 TestNG loads a suite, then `TestConfigurationListener` loads the selected YAML
 configuration and applies parallel settings. `RetryListener` installs retry
 behavior. Each `PlaywrightTest` method gets a new context and page; browser and
-Playwright handles are held in thread locals and cleaned up by suite teardown.
+Playwright handles are held in thread locals. Suite teardown closes handles
+visible to its executing thread; this is not a guarantee that another worker’s
+thread-local handles have been closed.
 Page objects wrap locators and navigation; assertions belong in tests.
 
 `ConfigReader` applies properties only to existing YAML paths. Its singleton is

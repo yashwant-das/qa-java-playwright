@@ -28,7 +28,7 @@ Or using the example suite:
 
 ## Framework capabilities showcase tests
 
-The framework includes comprehensive showcase tests demonstrating various capabilities:
+The bundled examples cover these framework mechanisms:
 
 - **ParallelExecutionTest**: Demonstrates parallel test execution with thread-safe browser handling
 - **DataDrivenTest**: Shows data-driven testing with YAML, JSON, and CSV data sources
