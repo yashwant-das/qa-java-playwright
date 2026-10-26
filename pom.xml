@@ -15,7 +15,7 @@
         <!-- Dependency versions -->
         <playwright.version>1.64.0</playwright.version>
         <testng.version>7.12.0</testng.version>
-        <allure.version>2.35.5</allure.version>
+        <allure.version>3.0.0</allure.version>
         <aspectj.version>1.9.26</aspectj.version>
         <slf4j.version>2.0.20</slf4j.version>
         <logback.version>1.6.5</logback.version>
