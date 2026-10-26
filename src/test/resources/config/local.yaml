@@ -1,0 +1,19 @@
+# Controlled browser tests: no public websites or credentials.
+environment:
+  name: local
+  baseUrl: about:blank
+browser:
+  type: chromium
+  headless: true
+  slowMo: 0
+  timeout: 10000
+screenshot:
+  takeOnFailure: true
+  fullPage: true
+testExecution:
+  parallel: false
+  threadCount: 1
+retry:
+  enabled: false
+  maxRetries: 0
+  delayBetweenRetries: 0

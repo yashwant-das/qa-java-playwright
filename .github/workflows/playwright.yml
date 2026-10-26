@@ -2,154 +2,169 @@ name: Playwright Tests
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [main, master]
   pull_request:
-    branches: [ main, master ]
+    branches: [main, master]
   workflow_dispatch:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
+
+concurrency:
+  group: playwright-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
+  quality:
+    name: Quality and unit tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up JDK
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          java-version: '21'
+          distribution: temurin
+          cache: maven
+      - name: Set up hook runtime
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.13'
+      - name: Install hook runner
+        run: python -m pip install pre-commit==4.7.0
+      - name: Compile, unit tests and static analysis
+        run: ./mvnw -B -ntp clean verify -DsuiteXmlFile=src/test/resources/suites/unit.xml
+      - name: Check all maintained files
+        run: pre-commit run --all-files --show-diff-on-failure
+
   test:
     name: Run Tests (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
     strategy:
       fail-fast: false
       matrix:
-        os: [ macos-14, windows-latest ]
-    
+        os: [macos-26, windows-latest]
+    defaults:
+      run:
+        shell: bash
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          fetch-depth: 0
-
+          persist-credentials: false
       - name: Set up JDK
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
-          java-version: 17
-          distribution: 'temurin'
-          cache: 'maven'
-
-      - name: Cache Maven packages
-        uses: actions/cache@v3
-        with:
-          path: ~/.m2
-          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-          restore-keys: ${{ runner.os }}-m2-
-
-      - name: Clean Allure Results (Unix)
-        if: runner.os != 'Windows'
+          java-version: '21'
+          distribution: temurin
+          cache: maven
+      - name: Compile framework and install matching browsers
         run: |
-          rm -rf target/allure-results/*
-          mkdir -p target/allure-results
-
-      - name: Clean Allure Results (Windows)
-        if: runner.os == 'Windows'
+          ./mvnw -B -ntp test-compile
+          ./mvnw -B -ntp exec:java -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install"
+      - name: Controlled browser smoke
         run: |
-          if (Test-Path target/allure-results) { Remove-Item target/allure-results -Recurse }
-          New-Item -Path target/allure-results -ItemType Directory -Force
-
-      - name: Install Playwright browsers (Unix)
-        if: runner.os != 'Windows'
-        run: mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install"
-
-      - name: Install Playwright browsers (Windows)
-        if: runner.os == 'Windows'
-        run: mvn exec:java "-Dexec.mainClass=com.microsoft.playwright.CLI" "-Dexec.args=install"
-
-      - name: Run tests
-        run: mvn clean test
-
-      - name: Generate Allure Report
+          for browser in chromium firefox webkit; do
+            ./mvnw -B -ntp test -DsuiteXmlFile=src/test/resources/suites/smoke.xml -Denvironment=local -Dbrowser.type="$browser"
+          done
+      - name: Run existing public-site suite
+        run: ./mvnw -B -ntp test -Dbrowser.headless=true
+      - name: Generate Allure report
         if: always()
-        run: |
-          mvn allure:report
-
-      - name: Verify report files (Unix)
-        if: always() && runner.os != 'Windows'
-        run: |
-          ls -la target/allure-results/
-          ls -la target/site/allure-maven-plugin/
-
-      - name: Verify report files (Windows)
-        if: always() && runner.os == 'Windows'
-        run: |
-          Get-ChildItem -Path target/allure-results/
-          Get-ChildItem -Path target/site/allure-maven-plugin/
-
-      - name: Create redirect HTML
+        run: ./mvnw -B -ntp allure:report
+      - name: Upload Allure report
         if: always()
-        run: |
-          echo '<!DOCTYPE html>
-          <html>
-          <head>
-              <meta http-equiv="refresh" content="0; url=./allure-maven-plugin/index.html" />
-              <title>Allure Report</title>
-          </head>
-          <body>
-              <p>Redirecting to Allure Report...</p>
-              <p>If you are not redirected automatically, <a href="./allure-maven-plugin/index.html">click here</a>.</p>
-          </body>
-          </html>' > target/site/index.html
-
-      - name: Upload Allure Report
-        if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: allure-report-${{ matrix.os }}
-          path: target/site/
-          retention-days: 30
-          compression-level: 6
-          overwrite: true
-
-      - name: Upload Test Screenshots
+          path: target/site/allure-maven-plugin/
+          if-no-files-found: error
+          retention-days: 3
+      - name: Upload failure evidence
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: test-screenshots-${{ matrix.os }}
-          path: target/screenshots/
-          retention-days: 7
-          compression-level: 6
-          overwrite: true
+          name: test-evidence-${{ matrix.os }}
+          path: |
+            target/screenshots/
+            target/surefire-reports/
+            logs/
+          retention-days: 3
+
+  analyze:
+    name: Analyze (java-kotlin)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up JDK
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          java-version: '21'
+          distribution: temurin
+          cache: maven
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@24c54180a607b1449ed407dd24f251e4e9147c8d # v4.38.3
+        with:
+          languages: java-kotlin
+          build-mode: manual
+          queries: security-extended
+      - name: Compile the test-only framework
+        run: ./mvnw -B -ntp clean test-compile
+      - name: Analyze
+        uses: github/codeql-action/analyze@24c54180a607b1449ed407dd24f251e4e9147c8d # v4.38.3
+        with:
+          category: /language:java-kotlin
 
   deploy:
     name: Deploy Report
-    needs: test
+    needs: [quality, test, analyze]
     runs-on: ubuntu-latest
-    if: always()
+    timeout-minutes: 10
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     permissions:
       contents: write
-      pages: write
-      id-token: write
-    
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: Download macOS Allure report
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
-          fetch-depth: 0
-
-      - name: Download macOS Allure Report
-        uses: actions/download-artifact@v4
-        with:
-          name: allure-report-macos-14
-          path: target/site
-
-      - name: Download Windows Allure Report
-        uses: actions/download-artifact@v4
+          name: allure-report-macos-26
+          path: target/site/allure-maven-plugin
+      - name: Download Windows Allure report
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: allure-report-windows-latest
-          path: target/site/windows-report
-
-      - name: Update index file to include Windows report link
+          path: target/site/windows-report/allure-maven-plugin
+      - name: Link the reports
         run: |
-          sed -i 's/<\/body>/<p><a href="\.\/windows-report\/allure-maven-plugin\/index.html">View Windows Test Report<\/a><\/p><\/body>/g' target/site/index.html
-
+          cat > target/site/index.html <<'HTML'
+          <!doctype html>
+          <html lang="en">
+          <head>
+          <meta charset="utf-8">
+          <meta http-equiv="refresh" content="0; url=./allure-maven-plugin/index.html">
+          <title>Playwright Java reports</title>
+          </head>
+          <body>
+          <h1>Playwright Java reports</h1>
+          <p><a href="./allure-maven-plugin/index.html">macOS report</a></p>
+          <p><a href="./windows-report/allure-maven-plugin/index.html">Windows report</a></p>
+          </body>
+          </html>
+          HTML
       - name: Deploy to gh-pages branch
-        uses: peaceiris/actions-gh-pages@v3
+        uses: peaceiris/actions-gh-pages@84c30a85c19949d7eee79c4ff27748b70285e453 # v4.1.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: target/site

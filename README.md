@@ -1,813 +1,187 @@
-<div align="center">
+# Playwright Java Accelerator
 
-  <h1>Playwright Java Accelerator</h1>
+A Java browser testing framework with Playwright, TestNG and Allure, ready to run.
 
-  <p><strong>A robust and maintainable Java test automation framework built with Playwright and TestNG</strong></p>
+Use the supplied page objects and examples to build tests for your application.
+Run the smoke suite to verify your setup.
 
-  <p>
-    <img src="https://img.shields.io/badge/Java-17+-ED8B00?logo=openjdk&logoColor=white" alt="Java"/>
-    <img src="https://img.shields.io/badge/Playwright-1.48+-2EAD33?logo=playwright&logoColor=white" alt="Playwright"/>
-    <img src="https://img.shields.io/badge/TestNG-7.9+-FF6A00?logo=testng&logoColor=white" alt="TestNG"/>
-    <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"/>
-  </p>
+[![CI on main](https://img.shields.io/github/actions/workflow/status/yashwant-das/qa-java-playwright/playwright.yml?branch=main&label=CI&style=flat&logo=githubactions&logoColor=white)](https://github.com/yashwant-das/qa-java-playwright/actions/workflows/playwright.yml)
+[![Allure report](https://img.shields.io/badge/Allure-report-FF6A00?style=flat)](https://yashwant-das.github.io/qa-java-playwright/)
+[![MIT license](https://img.shields.io/badge/license-MIT-blue?style=flat)](LICENSE)
+[![Java 21](https://img.shields.io/badge/Java-21-ED8B00?style=flat&logo=openjdk&logoColor=white)](docs/development.md#setup)
+[![Playwright 1.64.0](https://img.shields.io/badge/Playwright-1.64.0-2EAD33?style=flat)](pom.xml)
+[![TestNG 7.12.0](https://img.shields.io/badge/TestNG-7.12.0-FF6A00?style=flat)](pom.xml)
 
-  <p>
-    <img src="https://img.shields.io/badge/Chromium-Supported-4285F4?logo=google-chrome&logoColor=white" alt="Chromium"/>
-    <img src="https://img.shields.io/badge/Firefox-Supported-FF7139?logo=firefox-browser&logoColor=white" alt="Firefox"/>
-    <img src="https://img.shields.io/badge/WebKit-Supported-000000?logo=safari&logoColor=white" alt="WebKit"/>
-    <img src="https://img.shields.io/badge/Allure-Reports-FF6A00?logo=allure&logoColor=white" alt="Allure"/>
-    <img src="https://img.shields.io/badge/Parallel-Testing-00D9FF?logo=parallel&logoColor=white" alt="Parallel Testing"/>
-    <img src="https://img.shields.io/badge/CI/CD-GitHub Actions-2088FF?logo=github-actions&logoColor=white" alt="CI/CD"/>
-  </p>
+![Playwright Java Accelerator: Java and TestNG tests connected to Playwright browser automation and Allure reports](docs/assets/playwright-java-accelerator-banner.png)
 
-  <p>
-    <img src="https://github.com/yashwant-das/qa-java-playwright/actions/workflows/playwright.yml/badge.svg" alt="Playwright Tests"/>
-  </p>
+## Why it exists
 
-</div>
+Java teams adopting Playwright still need the infrastructure around browser
+automation: a test runner, environment settings, parallel execution, retries,
+test data and reports. Playwright Java can work with a [Java test runner](https://playwright.dev/java/docs/test-runners)
+such as TestNG or JUnit, but a team
+must connect those pieces before it has a reusable testing framework.
 
-![banner](https://github.com/user-attachments/assets/dd8a014a-8002-4568-a512-b0f818905b8e)
+This project supplies that starting point for teams that already use Java and
+Maven. It brings Playwright's browser API together with TestNG and Allure so you
+can focus on your application's tests rather than rebuilding the same setup.
+The [background article](https://medium.com/@yashwant-das/accelerate-your-java-ui-testing-with-playwright-introducing-a-modern-robust-framework-83b98e323411)
+explains the motivation; the commands and versions here describe this repository.
 
----
+The framework connects these capabilities:
 
-A robust and maintainable **Java test automation framework** built with **Playwright** and **TestNG**. This framework follows the Page Object Model (POM) design pattern and provides a comprehensive set of utilities for web application testing with modern browser automation capabilities.
+- **Execution settings without test-code edits:** YAML environments and typed
+  command-line overrides select the browser and configure suite parallelism and retries.
+- **Browser-state isolation:** Each browser test method gets a fresh context and
+  page; thread-local Playwright/browser handles are reused within a worker.
+- **Reusable interactions and data:** Page objects keep page actions together;
+  cached YAML/JSON/CSV fixtures support shared and environment-specific data.
+- **Failure investigation:** Allure collects test results and annotated steps;
+  the failure listener attempts screenshots when enabled and an active page is available.
+- **A first run without public websites:** Controlled smoke tests check form
+  submission and context isolation in a real browser before you try the public examples.
 
-## Table of Contents
+The supplied application examples use public websites and must be replaced for
+your application. [Architecture](docs/architecture.md#execution-and-boundaries)
+explains lifecycle boundaries, including the current worker-cleanup limitation.
 
-- [Features](#features)
-- [Project Structure](#project-structure)
-- [Prerequisites](#prerequisites)
-- [Installation](#installation)
-- [Quick Start](#quick-start)
-- [Usage](#usage)
-- [Examples](#examples)
-- [Page Object Model](#page-object-model)
-- [Configuration](#configuration)
-- [Reports](#reports)
-- [Logging](#logging)
-- [Advanced Features](#advanced-features)
-- [Troubleshooting](#troubleshooting)
-- [Framework Architecture](#framework-architecture)
-- [Contributing](#contributing)
-- [License](#license)
+## Architecture
 
-## Features
+```mermaid
+flowchart LR
+    Suite["TestNG suites + YAML / CLI config"] --> Lifecycle["Suite listeners + PlaywrightTest"]
+    Lifecycle --> Tests["Page objects + test methods"]
+    Data["YAML / JSON / CSV fixtures"] --> Tests
+    Tests --> Browser["Playwright browser context"]
+    Browser --> Local["Controlled HTML routes"]
+    Browser --> Public["Public demo websites"]
+    Tests --> Allure["Results, steps and screenshots in Allure"]
+```
 
-- **Page Object Model**: Organized page classes for better maintainability
-- **Browser Support**: Chromium by default; switch to Firefox or WebKit in the YAML config or with `-Dbrowser.type`
-- **Multi-Environment Support**: Built-in support for multiple environments (dev, qa, prod) with easy switching
-- **Headless Mode**: Run tests without opening browser windows
-- **Parallel Execution**: Run tests in parallel with configurable thread count for faster execution
-- **Rich Reporting**: Interactive Allure reports with test steps and screenshots of failed tests
-- **Auto-Waiting**: Playwright's built-in auto-waiting eliminates flaky tests
-- **Logging**: Comprehensive logging with SLF4J and Logback
-- **Configuration Management**: YAML configuration per environment, with any setting overridable from the command line
-- **Data-Driven Testing**: Support for YAML, JSON, and CSV test data
-- **Screenshot Capture**: Automatic screenshots on test failures with Allure integration
-- **Test Retry Mechanism**: Configurable automatic retry for failed tests
-- **CI/CD Integration**: GitHub Actions workflow for automated testing and reporting
-
-## Project Structure
+### Project structure
 
 ```text
 qa-java-playwright/
-│
-├── .github/
-│   └── workflows/
-│       └── playwright.yml              # GitHub Actions CI/CD workflow
-│
-├── src/
-│   └── test/
-│       ├── java/
-│       │   └── io/
-│       │       └── github/
-│       │           └── mypixelquest/
-│       │               └── pja/
-│       │                   ├── core/
-│       │                   │   └── PlaywrightTest.java
-│       │                   ├── config/
-│       │                   │   └── ConfigModel.java
-│       │                   ├── testdata/
-│       │                   │   ├── TestDataManager.java
-│       │                   │   └── TestDataGenerator.java
-│       │                   ├── listeners/
-│       │                   │   ├── ScreenshotListener.java
-│       │                   │   ├── RetryAnalyzer.java
-│       │                   │   ├── RetryListener.java
-│       │                   │   └── TestConfigurationListener.java
-│       │                   ├── pages/
-│       │                   │   ├── BasePage.java
-│       │                   │   └── PlaywrightDocsPage.java
-│       │                   ├── examples/
-│       │                   │   ├── PlaywrightDocsNavigationTest.java
-│       │                   │   ├── TestDataManagementTest.java
-│       │                   │   ├── ParallelExecutionTest.java
-│       │                   │   ├── DataDrivenTest.java
-│       │                   │   ├── ScreenshotAndReportingTest.java
-│       │                   │   ├── WaitStrategiesTest.java
-│       │                   │   ├── MultiBrowserTest.java
-│       │                   │   ├── RetryMechanismTest.java
-│       │                   │   └── FormInteractionTest.java
-│       │                   └── util/
-│       │                       ├── ConfigReader.java
-│       │                       └── ConfigReaderOverrideTest.java
-│       │
-│       └── resources/
-│           ├── config/
-│           │   ├── dev.yaml
-│           │   ├── qa.yaml
-│           │   └── prod.yaml
-│           ├── data/
-│           │   ├── test-data.json
-│           │   ├── test-data.csv
-│           │   └── playwright-test-data.yaml
-│           ├── logback.xml
-│           └── suites/
-│               ├── example-suite.xml
-│               └── testng.xml
-│
-├── .gitignore
-├── LICENSE
-├── pom.xml
-└── README.md
+├── src/test/
+│   ├── java/com/qaframework/playwright/
+│   │   ├── core/         # Browser and context lifecycle
+│   │   ├── config/       # Typed configuration model
+│   │   ├── listeners/    # Suite settings, retries and screenshots
+│   │   ├── pages/        # Reusable page objects
+│   │   ├── testdata/     # Fixture loading and generated data
+│   │   ├── util/         # Configuration loading and unit tests
+│   │   ├── smoke/        # Controlled browser checks
+│   │   └── examples/     # Public-site and data examples
+│   └── resources/        # Environments, fixtures, suites and logging
+├── config/               # Checkstyle rules
+├── scripts/              # Staged Java checks
+├── .mvn/wrapper/         # Pinned Maven distribution settings
+├── mvnw                  # Maven Wrapper for macOS/Linux
+├── mvnw.cmd              # Maven Wrapper for Windows
+├── pom.xml               # Dependencies, plugins and Java target
+├── docs/                 # Guides and report preview
+└── .github/              # CI, report deployment and dependency updates
 ```
 
-## Prerequisites
+### Tech stack
 
-Before installing the framework, ensure you have:
+| Layer | Tool / version | Purpose |
+| --- | --- | --- |
+| Build | Java 21; Maven 3.10.0 | Compile and run with a pinned build and matching Java target |
+| Browser automation | Playwright Java 1.64.0 | Package-matched Chromium, Firefox and WebKit binaries |
+| Test runner | TestNG 7.12.0 | Suites, data providers, parallel execution and retry listeners |
+| Configuration / data | Jackson 2.22.4 | YAML configuration and YAML/JSON/CSV fixtures |
+| Reporting | Allure adapter 2.35.5; Report 2.46.1 | Steps, test results and failure evidence |
+| Local gates | Checkstyle 14.3.0; pre-commit 4.7.0 | Java static analysis and staged Markdown/text/config checks |
 
-- **Java 17+** (check with `java -version`)
-- **Maven 3.6+** (check with `mvn -version`)
-- **Chromium browser** (installed automatically by Playwright when you run `mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install"`).
-  - The same command also installs Firefox and WebKit. The default configuration uses Chromium; select another browser in the YAML config or with `-Dbrowser.type`.
+The [POM](pom.xml), [wrapper properties](.mvn/wrapper/maven-wrapper.properties)
+and [hook configuration](.pre-commit-config.yaml) are the version sources of truth.
+[Architecture](docs/architecture.md) explains lifecycle boundaries and trade-offs.
 
-### Quick Setup Validation
+## Start a project from this template
 
-After installation, you can verify your setup:
+1. Copy the repository, change the Maven artifact ID and select a project segment
+   under `com.qaframework`; update source paths, imports, suites and logger names together.
+2. Set your environment URLs and browser settings in `src/test/resources/config/`.
+3. Replace the bundled page objects, fixtures and public examples with tests for
+   your application. Public examples contain hard-coded URLs; changing YAML alone
+   does not retarget them. Keep the controlled smoke suite for first-run checks.
+4. Review the CI matrix, report-publication destination and project links before
+   enabling deployment in the copied repository.
 
-```bash
-# Check Java version
-java -version  # Should be 17+
+## Quickstart
 
-# Check Maven version
-mvn -version   # Should be 3.6+
-
-# Check that the Playwright CLI runs (prints the install options)
-mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install --help"
-```
-
-## Installation
-
-1. Clone the repository:
-
-   ```bash
-   git clone https://github.com/yashwant-das/qa-java-playwright.git
-   cd qa-java-playwright
-   ```
-
-2. Install Playwright browser binaries:
-
-   ```bash
-   mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install"
-   ```
-
-   This will download browser binaries for Chromium, Firefox, and WebKit.
-
-3. Verify installation:
-
-   ```bash
-   mvn clean compile
-   ```
-
-## Quick Start
-
-Get up and running in minutes:
+Use JDK 21 with `JAVA_HOME` set. The framework targets Java 21.
+Git and internet access are needed for the initial Maven and browser downloads.
+Run these commands from the repository root after cloning:
 
 ```bash
-# 1. Clone and setup
 git clone https://github.com/yashwant-das/qa-java-playwright.git
 cd qa-java-playwright
-mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install"
-
-# 2. Run your first test
-mvn test -Dtest=PlaywrightDocsNavigationTest#testHomePageNavigation
-
-# 3. View the Allure report
-mvn allure:serve
+./mvnw test-compile
+./mvnw exec:java -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install chromium"
+./mvnw test -DsuiteXmlFile=src/test/resources/suites/smoke.xml -Denvironment=local
 ```
 
-That's it! The framework will automatically handle browser setup, create necessary directories, and generate reports.
+The smoke suite runs a real headless Chromium browser against controlled HTML.
+Expect zero failures and `BUILD SUCCESS`. No credentials or running application
+are needed. On Windows use `mvnw.cmd` and quote `-D` arguments in PowerShell.
+See [setup](docs/development.md#setup) for JDK selection and platform details.
 
 ## Usage
 
-### Running Tests
+```bash
+# Default suite: configuration units and examples, including public websites
+./mvnw test -Dbrowser.headless=true
 
-**Basic Test Execution:**
+# Selected public-site suite, with retry and parallel listeners
+./mvnw test -DsuiteXmlFile=src/test/resources/suites/example-suite.xml -Dbrowser.headless=true
+
+# Generate the Allure report from the most recent run
+./mvnw allure:report
+```
+
+[Development](docs/development.md) covers browser selection, overrides, reports,
+adding tests and troubleshooting. [Examples](docs/examples.md) lists the demos.
+The YAML default is headed Chromium; install Firefox or WebKit from the same
+Playwright package before selecting them with `-Dbrowser.type`.
+
+## Verification
 
 ```bash
-# Run all tests
-mvn test
-
-# Run specific test class
-mvn test -Dtest=PlaywrightDocsNavigationTest
-
-# Run specific test method
-mvn test -Dtest=PlaywrightDocsNavigationTest#testHomePageNavigation
+./mvnw verify -DsuiteXmlFile=src/test/resources/suites/unit.xml
+./mvnw test -DsuiteXmlFile=src/test/resources/suites/smoke.xml -Denvironment=local
 ```
 
-**Browser Selection:**
-
-```bash
-# Run tests in Chromium (default)
-mvn test -Dbrowser.type=chromium
-
-# Run tests in Firefox
-mvn test -Dbrowser.type=firefox
-
-# Run tests in WebKit
-mvn test -Dbrowser.type=webkit
-```
-
-**Execution Modes:**
-
-```bash
-# Run tests in headless mode (faster, no UI)
-mvn test -Dbrowser.headless=true
-
-# Run tests in headed mode (see browser)
-mvn test -Dbrowser.headless=false
-
-# Run tests with specific environment (dev, qa or prod; qa is the default)
-mvn test -Denvironment=prod
-```
-
-`-Dheadless=true|false` is accepted as a short form of `-Dbrowser.headless`.
-
-**Test Suite Execution:**
-
-```bash
-# Run main test suite (all tests)
-mvn test
-
-# Run example suite (playwright.dev tests only)
-mvn test -DsuiteXmlFile=src/test/resources/suites/example-suite.xml
-```
-
-**Test Filtering:**
-
-```bash
-# Run only the tests in a TestNG group
-mvn test -Dgroups=smoke
-
-# Run specific test class
-mvn test -Dtest=ParallelExecutionTest
-```
-
-A test joins a group through its annotation, e.g. `@Test(groups = "smoke")`. The only test in the `smoke` group out of the box is `PlaywrightDocsNavigationTest#testHomePageNavigation`.
-
-> **Note:** `-Dtest=...` makes Maven run the named classes directly instead of a suite file. The retry and parallel settings are applied by listeners declared in the suite files, so they do not take effect in a `-Dtest` run. Screenshots on failure still work. To run a subset with retries and parallel execution, use a suite file (`-DsuiteXmlFile`) or a group (`-Dgroups`).
-
-### Configuration Overrides
-
-Any setting in the environment's YAML file can be overridden at runtime with a `-D` property named after its YAML path (`section.key`):
-
-```bash
-# Override browser settings
-mvn test -Dbrowser.type=firefox -Dbrowser.headless=true
-
-# Override parallel execution
-mvn test -DtestExecution.parallel=false
-mvn test -DtestExecution.threadCount=4
-
-# Override retry settings
-mvn test -Dretry.enabled=true
-mvn test -Dretry.maxRetries=3
-mvn test -Dretry.delayBetweenRetries=2000
-
-# Override any other YAML setting the same way
-mvn test -Dbrowser.slowMo=250 -Dbrowser.timeout=60000
-mvn test -Denvironment.baseUrl=https://playwright.dev/
-
-# Select the environment file
-mvn test -Denvironment=qa
-```
-
-An override must be valid for the setting's type. A non-numeric value for a numeric setting (for example `-DtestExecution.threadCount=many`) stops the run with a configuration error.
-
-## Examples
-
-### Playwright Website Tests
-
-The `PlaywrightDocsNavigationTest` class demonstrates various interactions with the Playwright documentation website:
-
-- **Homepage Navigation Test**: Verifies basic navigation and "Get Started" functionality
-- **Java Documentation Test**: Tests navigation to Java-specific documentation
-- **Search Functionality Test**: Validates the search feature and modal dialog
-- **Tools Navigation Test**: Tests navigation between different Playwright tools (Codegen, Trace Viewer)
-
-**Run these tests:**
-
-```bash
-mvn test -Dtest=PlaywrightDocsNavigationTest
-```
-
-Or using the example suite:
-
-```bash
-mvn test -DsuiteXmlFile=src/test/resources/suites/example-suite.xml
-```
-
-### Framework Capabilities Showcase Tests
-
-The framework includes comprehensive showcase tests demonstrating various capabilities:
-
-- **ParallelExecutionTest**: Demonstrates parallel test execution with thread-safe browser handling
-- **DataDrivenTest**: Shows data-driven testing with YAML, JSON, and CSV data sources
-- **ScreenshotAndReportingTest**: Demonstrates screenshot capture and Allure reporting integration
-- **WaitStrategiesTest**: Shows different wait strategies and Playwright's auto-waiting capabilities
-- **MultiBrowserTest**: Demonstrates cross-browser testing (Chromium, Firefox, WebKit)
-- **RetryMechanismTest**: Shows test retry mechanism for handling flaky tests
-- **FormInteractionTest**: Demonstrates form filling, validation, and submission
-- **TestDataManagementTest**: Demonstrates loading and using test data from multiple sources
-
-**Run all showcase tests:**
-
-```bash
-mvn test -Dtest='*Test'
-```
-
-**Run specific showcase test:**
-
-```bash
-mvn test -Dtest=ParallelExecutionTest
-mvn test -Dtest=DataDrivenTest
-mvn test -Dtest=ScreenshotAndReportingTest
-mvn test -Dtest=WaitStrategiesTest
-mvn test -Dtest=MultiBrowserTest
-mvn test -Dtest=RetryMechanismTest
-mvn test -Dtest=FormInteractionTest
-mvn test -Dtest=TestDataManagementTest
-```
-
-## Page Object Model
-
-The framework follows the Page Object Model (POM) design pattern for better maintainability and code reusability.
-
-### Base Page
-
-All page objects extend `BasePage`, which provides common functionality:
-
-```java
-public abstract class BasePage {
-    protected final Page page;
-    
-    public BasePage(Page page) {
-        this.page = page;
-    }
-    
-    // Common methods available to all page objects
-    public String getTitle() { /* ... */ }
-    public String getCurrentUrl() { /* ... */ }
-    public BasePage waitForPageLoad() { /* ... */ }
-}
-```
-
-### Creating a Page Object
-
-```java
-public class PlaywrightDocsPage extends BasePage {
-    private final Locator getStartedButton;
-    private final Locator search;
-    private final Locator javaLink;
-    
-    public PlaywrightDocsPage(Page page) {
-        super(page);
-        this.getStartedButton = page.getByRole(AriaRole.LINK, 
-            new Page.GetByRoleOptions().setName("Get started"));
-        // The label includes the platform's shortcut key, so match the prefix only
-        this.search = page.getByRole(AriaRole.BUTTON, 
-            new Page.GetByRoleOptions().setName(Pattern.compile("^Search")));
-        this.javaLink = page.locator("a[href='/java/']");
-    }
-    
-    @Step("Navigate to Playwright documentation")
-    public PlaywrightDocsPage navigate() {
-        page.navigate("https://playwright.dev/java/");
-        return this;
-    }
-    
-    @Step("Click Get Started button")
-    public PlaywrightDocsPage clickGetStarted() {
-        getStartedButton.click();
-        page.waitForURL("**/docs/intro**");
-        return this;
-    }
-    
-    @Step("Open search dialog")
-    public PlaywrightDocsPage openSearch() {
-        search.click();
-        return this;
-    }
-}
-```
-
-### Creating a Test Class
-
-```java
-@Epic("Web Playwright Java Framework")
-@Feature("Playwright Documentation Navigation")
-public class PlaywrightDocsNavigationTest extends PlaywrightTest {
-    
-    @Test(description = "Verify homepage navigation and Get Started button", groups = "smoke")
-    @Severity(SeverityLevel.BLOCKER)
-    @Story("Homepage Navigation")
-    public void testHomePageNavigation() {
-        getCurrentPage().ifPresent(page -> {
-            PlaywrightDocsPage docsPage = new PlaywrightDocsPage(page);
-            
-            docsPage.navigate()
-                    .clickGetStarted();
-            
-            assertThat(docsPage.getCurrentUrl())
-                    .contains("/docs/intro");
-        });
-    }
-}
-```
-
-## Configuration
-
-The framework uses YAML configuration files located in `src/test/resources/config/` as the single source of truth for all configuration settings.
-
-### Configuration Files
-
-- `dev.yaml` - Development environment configuration
-- `qa.yaml` - QA environment configuration
-- `prod.yaml` - Production environment configuration
-
-### Example Configuration (qa.yaml)
-
-```yaml
-environment:
-  name: qa
-  baseUrl: https://playwright.dev/
-
-browser:
-  type: chromium  # chromium, firefox, or webkit
-  headless: false
-  slowMo: 0       # milliseconds to wait between actions
-  timeout: 30000  # default timeout in milliseconds
-  
-screenshot:
-  takeOnFailure: true
-  fullPage: true
-
-testExecution:
-  parallel: true     # enable/disable parallel execution
-  threadCount: 3     # number of parallel threads to use
-
-retry:
-  enabled: true      # enable/disable test retries
-  maxRetries: 2      # maximum number of retry attempts
-  delayBetweenRetries: 1000  # delay in milliseconds between retries
-```
-
-### Configuration Management
-
-The framework uses a configuration management system that:
-
-- Centralizes all settings in YAML configuration files
-- Supports environment-specific configurations
-- Allows runtime overrides of any setting via `-D` system properties
-- Uses TestNG listeners to apply the parallel and retry settings to the suite
-- Provides automatic test retry capabilities
-
-### Test Retry Configuration
-
-Configure retry behavior through YAML:
-
-```yaml
-retry:
-  enabled: true      # Enable/disable retry mechanism
-  maxRetries: 2      # Maximum retry attempts (0-N)
-  delayBetweenRetries: 1000  # Milliseconds to wait between retries
-```
-
-Or override at runtime:
-
-```bash
-mvn test -Dretry.enabled=true -Dretry.maxRetries=3 -Dretry.delayBetweenRetries=2000
-```
-
-### Parallel Execution
-
-Configure parallel execution through YAML:
-
-```yaml
-testExecution:
-  parallel: true
-  threadCount: 3
-```
-
-Or override at runtime:
-
-```bash
-mvn test -DtestExecution.parallel=false
-mvn test -DtestExecution.threadCount=4
-```
-
-## Reports
-
-The framework generates comprehensive test reports using Allure:
-
-### Allure Reports
-
-Each test run writes Allure result data to `target/allure-results/`:
-
-**Generate and View Allure Reports:**
-
-```bash
-# Generate Allure report
-mvn allure:report
-
-# Serve interactive report
-mvn allure:serve
-```
-
-**What the report shows:**
-
-- Test result dashboard with pass/fail statistics
-- Tests grouped by suite, package and by the `@Epic`, `@Feature` and `@Story` annotations
-- Step-by-step execution details from `@Step` methods
-- A screenshot attached to each failed test
-- Timeline view of test execution
-- Severity, description and duration of each test
-
-The framework does not write an Allure environment file, so the report's Environment widget is empty. Trend history is not carried over between runs.
-
-**CI/CD Test Results:**
-
-The test results are automatically published to GitHub Pages after each CI/CD run. You can view them at:
-[https://yashwant-das.github.io/qa-java-playwright/](https://yashwant-das.github.io/qa-java-playwright/)
-
-The published report is from the latest run on macOS, with a link to the Windows run. Each deployment replaces the previous one.
-
-### Screenshots
-
-Screenshots are automatically captured and attached to reports:
-
-- **On Failure**: All failed tests automatically capture screenshots
-- **Integration**: Screenshots are embedded in Allure reports
-- **Storage**: `target/screenshots/`, named after the test with a timestamp
-- **Scope**: Full page or viewport only, set by `screenshot.fullPage`
-
-## Logging
-
-The framework provides comprehensive logging with automatic timestamping:
-
-- **Test Execution Logs**: `logs/playwright-tests.log`
-- **Archived Logs**: `logs/archived/playwright-tests.YYYY-MM-DD.i.log`
-- **Console Logging**: Real-time test execution information
-- **Log Levels**: DEBUG, INFO, WARN, ERROR
-
-### Log Rotation Policy
-
-- Log files are automatically rotated when:
-    - Size reaches 10MB
-    - A new day starts
-- Retention policy:
-    - Keeps logs for 30 days
-    - Total size cap of 100MB for all archived logs
-
-### Log Levels
-
-Default log levels are configured as follows:
-
-- Framework code (io.github.mypixelquest.pja): DEBUG
-- TestNG: INFO
-- Playwright: INFO
-- Root logger: INFO
-
-### Customizing Logging
-
-You can modify logging behavior by editing `src/test/resources/logback.xml`:
-
-- Change log levels
-- Modify rotation policies
-- Add new appenders
-- Customize log patterns
-
-## Advanced Features
-
-### Parallel Test Execution
-
-The framework supports parallel test execution through TestNG:
-
-```yaml
-# Configure parallel execution in YAML
-testExecution:
-  parallel: true
-  threadCount: 3
-```
-
-```bash
-# Or override at runtime
-mvn test -DtestExecution.parallel=true -DtestExecution.threadCount=4
-```
-
-**Benefits:**
-
-- Faster execution with multiple threads
-- Independent browser sessions for each thread
-- Automatic test distribution across threads
-- Thread-safe browser handling
-
-### Test Data Management
-
-The framework provides comprehensive test data management capabilities:
-
-#### Supported Data Formats
-
-- **YAML**: `playwright-test-data.yaml`
-- **JSON**: `test-data.json`
-- **CSV**: `test-data.csv`
-
-#### Example: YAML Data
-
-```yaml
-users:
-  admin:
-    username: admin@playwright-test.com
-    password: Test@1234
-    role: ADMIN
-    permissions:
-      - read
-      - write
-      - delete
-
-browsers:
-  chromium:
-    name: "Chromium"
-    type: "chromium"
-    headless: true
-    viewport:
-      width: 1920
-      height: 1080
-```
-
-#### Using Test Data in Tests
-
-```java
-@Test
-public void testWithYamlData() {
-    TestDataManager dataManager = new TestDataManager("qa");
-    Map<String, Object> data = dataManager.loadYamlData("playwright-test-data.yaml");
-    
-    String username = (String) dataManager.getValue(data, "users.admin.username");
-    String password = (String) dataManager.getValue(data, "users.admin.password");
-    
-    // Use data in test
-}
-```
-
-#### Dynamic Data Generation
-
-```java
-@Test
-public void testWithDynamicData() {
-    String email = TestDataGenerator.generateEmail();
-    String password = TestDataGenerator.generatePassword(12, true);
-    String phone = TestDataGenerator.generatePhoneNumber();
-    
-    // Use generated data in test
-}
-```
-
-### Test Suite Configuration
-
-The framework includes two TestNG suite files:
-
-#### Main Test Suite (testng.xml)
-
-- Runs all example tests in the framework
-- Also runs the framework's own unit tests (`ConfigReaderOverrideTest`), which need no browser
-- Uses package scanning to include all example test classes
-- Configured with all framework listeners
-
-#### Example Suite (example-suite.xml)
-
-- Focused suite for playwright.dev documentation testing
-- Includes only `PlaywrightDocsNavigationTest` class
-- Demonstrates how to create targeted test suites
-- Useful for running specific test scenarios
-
-**Usage:**
-
-```bash
-# Run main suite (all tests)
-mvn test
-
-# Run example suite (playwright.dev tests only)
-mvn test -DsuiteXmlFile=src/test/resources/suites/example-suite.xml
-```
-
-`mvn test` runs `testng.xml` by default. `-DsuiteXmlFile` replaces it with any other suite file.
-
-## Troubleshooting
-
-### Common Issues
-
-**Browser Not Installed:**
-
-- Ensure the browser is installed before running tests
-- Install Playwright browsers: `mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install"`
-
-**Java Version Issues:**
-
-- Verify Java version: `java -version` (should be 17+)
-- Maven may use a different JDK than `java` on your PATH. Check the "Java version" line of `mvn -version`, and set `JAVA_HOME` if it is not the JDK you expect
-- `Fatal error compiling: java.lang.ExceptionInInitializerError: com.sun.tools.javac.code.TypeTag :: UNKNOWN` means Maven is running on a JDK that is too new for the bundled Lombok version. It occurs on JDK 27; JDK 21 compiles cleanly. Point `JAVA_HOME` at a JDK 17 or 21 installation
-
-**Maven Dependency Issues:**
-
-- Clean and rebuild: `mvn clean install`
-- Verify Maven version: `mvn -version` (should be 3.6+)
-
-**Configuration Errors:**
-
-- Verify `src/test/resources/config/*.yaml` files exist and are valid YAML
-- Check `src/test/resources/data/*` files are valid
-
-**Import Errors:**
-
-- Verify all dependencies are installed: `mvn dependency:resolve`
-- Check Java version compatibility
-
-### Getting Help
-
-If tests fail, check:
-
-1. Log files in `logs/` directory for detailed error messages
-2. Screenshots in `target/screenshots/` for visual debugging
-3. Allure reports for test execution details
-4. GitHub Actions logs for CI/CD issues
-
-The framework provides clear error messages to help diagnose issues quickly.
-
-## Framework Architecture
-
-### Core Components
-
-**PlaywrightTest** (`core/PlaywrightTest.java`):
-
-- Base test class with browser setup/teardown
-- Provides `getCurrentPage()` method for test access
-- Handles browser lifecycle management
-
-**ConfigReader** (`util/ConfigReader.java`):
-
-- Singleton pattern for configuration loading
-- Loads YAML configuration files
-- Applies `-D` system property overrides to the loaded values
-- Provides typed access to configuration settings
-
-**TestDataManager** (`testdata/TestDataManager.java`):
-
-- Centralized test data loading from YAML, JSON, CSV
-- Path-based value access using dot notation
-- Environment-specific data support
-
-**ScreenshotListener** (`listeners/ScreenshotListener.java`):
-
-- Automatic screenshot capture on test failure
-- Allure report integration
-- Full-page screenshot support
-
-**RetryAnalyzer** (`listeners/RetryAnalyzer.java`):
-
-- Configurable test retry mechanism
-- Tracks retry attempts per test
-- Configurable delay between retries
-
-**BasePage** (`pages/BasePage.java`):
-
-- Common page object methods (title, URL, wait for load)
-- Playwright page wrapper
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a Pull Request
+`verify` compiles the test-only framework, runs configuration unit tests and Java
+static analysis. The smoke suite additionally proves real-browser behavior on
+controlled pages. The public-site suite exercises Playwright docs, Selenium’s web form, example.com and httpbin.org.
+CI runs quality/unit checks on Linux, controlled checks in all three browsers and
+public examples on macOS/Windows, plus CodeQL. These are configured checks;
+current results and outstanding native-browser failures are recorded in
+[Development](docs/development.md#verification-status).
+Allure data is written to `target/allure-results/`; the generated HTML lives in
+`target/site/allure-maven-plugin/`. CI uploads reports for three days. Successful
+trusted `main` runs publish the [macOS report and Windows link](https://yashwant-das.github.io/qa-java-playwright/).
+
+![Allure example showing 10 passing configuration tests and two broken controlled browser checks, with an 83.33 percent pass rate](docs/assets/allure-report-new.png)
+
+Earlier local report: 10 configuration tests passed and two controlled browser
+checks were marked broken (83.33% passing). This screenshot does not represent
+the separate successful clean-copy verification or the hosted CI matrix; see
+[verification status](docs/development.md#verification-status) for that evidence.
+The report badge links to the latest published `main` report.
+
+[Quality gates](docs/development.md#quality-gates-and-hooks) includes Markdown,
+text/config checks and pre-commit setup.
+
+## Documentation
+
+- [Development](docs/development.md): setup, configuration, test commands, reports and troubleshooting.
+- [Architecture](docs/architecture.md): layout, execution flow, shared layers and boundaries.
+- [Examples](docs/examples.md): the public-site demo catalog, kept separate for quick lookup.
+- Historical records: [adoption history](docs/superpowers/history/2026-10-25-standards-adoption.md) and [implementation plans](docs/superpowers/plans/); retained for traceability, not current setup instructions.
 
 ## License
 
 MIT. See [LICENSE](LICENSE).
-
----
-
-Built with ❤️ using Java, Playwright, TestNG, and Allure

@@ -3,12 +3,12 @@
 <!--
     Main TestNG Suite Configuration
     This suite runs all example tests in the framework.
-    
+
     Listeners:
     - ScreenshotListener: Automatically captures screenshots on test failure
     - TestConfigurationListener: Configures suite parameters and parallel execution from YAML config
     - RetryListener: Handles test retry mechanism based on configuration
-    
+
     Usage:
     - Run via Maven: mvn test
     - Run via IDE: Right-click on this file and select "Run"
@@ -16,22 +16,22 @@
 -->
 <suite name="Web Playwright Java Framework Test Suite" verbose="2">
     <listeners>
-        <listener class-name="io.github.mypixelquest.pja.listeners.ScreenshotListener"/>
-        <listener class-name="io.github.mypixelquest.pja.listeners.TestConfigurationListener"/>
-        <listener class-name="io.github.mypixelquest.pja.listeners.RetryListener"/>
+        <listener class-name="com.qaframework.playwright.listeners.ScreenshotListener"/>
+        <listener class-name="com.qaframework.playwright.listeners.TestConfigurationListener"/>
+        <listener class-name="com.qaframework.playwright.listeners.RetryListener"/>
     </listeners>
 
     <!-- Unit tests for the framework itself (no browser needed) -->
     <test name="Framework Unit Tests">
         <classes>
-            <class name="io.github.mypixelquest.pja.util.ConfigReaderOverrideTest"/>
+            <class name="com.qaframework.playwright.util.ConfigReaderOverrideTest"/>
         </classes>
     </test>
 
     <!-- Run all example tests demonstrating framework capabilities -->
     <test name="All Example Tests">
         <packages>
-            <package name="io.github.mypixelquest.pja.examples.*"/>
+            <package name="com.qaframework.playwright.examples.*"/>
         </packages>
     </test>
 </suite>
