@@ -48,7 +48,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-14, windows-latest]
+        os: [macos-26, windows-latest]
     defaults:
       run:
         shell: bash
@@ -139,7 +139,7 @@ jobs:
       - name: Download macOS Allure report
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
-          name: allure-report-macos-14
+          name: allure-report-macos-26
           path: target/site/allure-maven-plugin
       - name: Download Windows Allure report
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2

@@ -88,12 +88,16 @@ public class PlaywrightTest {
         log.info("Cleaning up browser context after test");
 
         if (pageThreadLocal.get() != null) {
+            log.info("Closing Playwright page");
             pageThreadLocal.get().close();
+            log.info("Closed Playwright page");
             pageThreadLocal.remove();
         }
 
         if (contextThreadLocal.get() != null) {
+            log.info("Closing browser context");
             contextThreadLocal.get().close();
+            log.info("Closed browser context");
             contextThreadLocal.remove();
         }
     }
@@ -106,12 +110,16 @@ public class PlaywrightTest {
         log.info("Cleaning up Playwright resources");
 
         if (browserThreadLocal.get() != null) {
+            log.info("Closing worker browser");
             browserThreadLocal.get().close();
+            log.info("Closed worker browser");
             browserThreadLocal.remove();
         }
 
         if (playwrightThreadLocal.get() != null) {
+            log.info("Closing Playwright instance");
             playwrightThreadLocal.get().close();
+            log.info("Closed Playwright instance");
             playwrightThreadLocal.remove();
         }
     }

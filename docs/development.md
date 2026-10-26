@@ -433,11 +433,11 @@ files, plus compilation and unit tests on Linux.
 Required contexts enforced by the active `main-rule` ruleset:
 
 - `Quality and unit tests`
-- `Run Tests (macos-14)`
+- `Run Tests (macos-26)`
 - `Run Tests (windows-latest)`
 - `Analyze (java-kotlin)`
 
-The browser jobs run controlled Chromium, Firefox and WebKit smoke, plus the complete public-site suite,
+The browser jobs use `macos-26` and `windows-latest`. They run controlled Chromium, Firefox and WebKit smoke, plus the complete public-site suite,
 then upload Allure reports. Public-site failures remain failures; no job ignores
 them. Each browser is exercised by the smoke suite; the public examples use Chromium. `Deploy Report` runs only on successful `main`
 quality, browser and CodeQL checks from a non-PR event, writes only the existing `gh-pages` branch and retains
@@ -469,6 +469,7 @@ report integration; they do not waive failed checks.
 | Allure | Retain adapter 2.35.5: candidate 3.0.0 failed compilation against the attachment API used here. Report 2.46.1 with Maven plugin 3.1.0 preserves the existing report format. | Yashwant Das; review when updating attachment integration or intentionally migrating report formats. |
 | Surefire | Retain 3.5.6: candidate 3.6.0 did not honor the TestNG XML selection in the unit-only check and started a browser example. | Yashwant Das; review when changing the test engine or reevaluating native TestNG suite support. |
 | Browser setup | Surefire sets `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1`. Install package-matched binaries explicitly so test startup does not download browsers. | Yashwant Das; review when changing Playwright startup or browser installation. |
+| macOS runner | Pin `macos-26` instead of the inherited `macos-14` label, which GitHub retires on 2026-11-02. The report artifact and required check use the same runner label. | Yashwant Das; review when GitHub retires the image or Playwright changes OS support. |
 | README title | Use the owner-approved display title `Playwright Java Accelerator`; the repository identifier remains `qa-java-playwright`. | Yashwant Das; review when renaming the project or changing its identity. |
 
 ## Verification status
@@ -505,6 +506,11 @@ successful clean-copy tests or establish hosted browser success.
   but the host-specific cause was not proven. Hosted macOS 14 WebKit timed out
   with a frozen-build warning. Keep both checks enabled. Owner: Yashwant Das;
   review after relevant host/browser changes or upstream fixes.
+- **Cleanup diagnostics:** Run `40328422998` on macOS 14 stopped logging after
+  the first Chromium test entered context cleanup; the public suite was skipped
+  after smoke cancellation. The OS was not proven to be the cause. The current
+  base class logs before and after each page, context, browser and Playwright
+  close, so a repeated stall can be narrowed to the specific operation.
 - **Compiled output:** The primary checkout's smoke class expected `Page.route`
   to return `void`; the selected library and freshly compiled temporary copy used
   `AutoCloseable`. The writer of the incompatible class was not identified.
@@ -515,9 +521,9 @@ successful clean-copy tests or establish hosted browser success.
 - **Validation scope:** Hosted checks must pass on the revision being merged.
   Local success does not establish hosted success. Earlier Java 17
   compilation evidence is historical and does not describe the current target.
-- **Merge readiness:** The macOS check remains required even while its recorded
-  run is cancelled. Resolve the native-browser failure and obtain passing checks
-  for the revision being merged; do not bypass it based on local Chromium success.
+- **Merge readiness:** The `macos-26` check must pass on the revision being merged.
+  The older macOS 14 failures remain historical evidence; local Chromium success
+  does not replace successful hosted validation on the new runner.
 
 ## Repository metadata
 
