@@ -9,10 +9,12 @@ Explicit owner instructions take precedence. Keep standards profile and rollout
 bookkeeping out of the project README; record evidence and pending exceptions
 in the development guide.
 
-- Preserve the Java 17 target; use JDK 21 to build. Target changes need owner approval.
+- Build and target Java 21. Further runtime-baseline changes need owner approval.
 - Retain Maven test-source layout and the existing MIT license.
 - Use Maven group `com.qaframework` and base package `com.qaframework.playwright`.
   Keep project subpackages descriptive and free of personal names or abbreviations.
+- Use the owner-approved README title `Playwright Java Accelerator`; retain
+  `qa-java-playwright` as the repository identifier.
 - Keep root README badges, showcase capabilities, Mermaid diagram and structure/stack
   overview accurate; preserve setup depth in the guides.
 - Keep controlled smoke tests separate from public-site examples and offline units.

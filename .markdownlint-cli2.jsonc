@@ -3,5 +3,5 @@
     "default": true,
     "MD013": false
   },
-  "ignores": ["target/**", "logs/**", "node_modules/**", ".allure/**"]
+  "ignores": ["target/**", "logs/**", "node_modules/**", ".allure/**", "docs/superpowers/**"]
 }

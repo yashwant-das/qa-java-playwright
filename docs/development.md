@@ -5,9 +5,8 @@
 ## Setup
 
 Use JDK 21 for the supported build toolchain and set `JAVA_HOME` accordingly.
-The bytecode/API target remains Java 17, preserving the existing compatibility
-contract; raising that target requires owner approval. A Java 17 runtime run is
-tracked separately below. On macOS with Homebrew OpenJDK 21:
+The compiler API/bytecode target is also Java 21. Java 17 is no longer a supported
+target following the owner-approved baseline alignment. On macOS with Homebrew OpenJDK 21:
 
 ```bash
 export JAVA_HOME="$(brew --prefix openjdk@21)/libexec/openjdk.jdk/Contents/Home"
@@ -26,74 +25,64 @@ effect during a test. No Node application or global Maven installation is requir
 
 ## Running tests
 
-**Basic Test Execution:**
+Run commands from the repository root. Install the selected browser before
+running a browser suite. The default environment is `qa`, with headed Chromium.
+
+### Suite selection
+
+| Selection | Command | Scope |
+| --- | --- | --- |
+| Default | `./mvnw test` | Configuration units and all bundled examples, including public websites |
+| Public documentation examples | `./mvnw test -DsuiteXmlFile=src/test/resources/suites/example-suite.xml` | Four Playwright documentation tests, with suite listeners |
+| Configuration units | `./mvnw verify -DsuiteXmlFile=src/test/resources/suites/unit.xml` | Browser-free configuration tests and Checkstyle |
+| Controlled smoke | `./mvnw test -DsuiteXmlFile=src/test/resources/suites/smoke.xml -Denvironment=local` | Real-browser form and context-isolation checks, without public websites |
+| Public smoke group | `./mvnw test -Dgroups=smoke` | The default suite's `PlaywrightDocsNavigationTest#testHomePageNavigation` |
+
+The `smoke` group and `smoke.xml` suite select different tests. The local smoke
+configuration disables retries and parallel execution. The other browser commands
+above retain the selected environment's settings; add `-Dbrowser.headless=true`
+to hide browser windows.
+
+### Selecting classes and methods
 
 ```bash
-# Run all tests
-./mvnw test
-
-# Run specific test class
+# Run a specific test class
 ./mvnw test -Dtest=PlaywrightDocsNavigationTest
 
-# Run specific test method
+# Run a specific test method
 ./mvnw test -Dtest=PlaywrightDocsNavigationTest#testHomePageNavigation
 ```
 
-**Browser Selection:**
+`-Dtest=...` bypasses the suite file. Retry and parallel settings are applied by
+listeners registered in the suite files, so those settings do not take effect in
+a direct class/method run. The inherited screenshot listener still applies to
+classes extending `PlaywrightTest`. Use a suite file or a group when you need the
+suite's retry and parallel behavior.
+
+### Browser and environment selection
 
 ```bash
-# Run tests in Chromium (default)
+# Select one browser per run (install it first)
 ./mvnw test -Dbrowser.type=chromium
-
-# Run tests in Firefox
 ./mvnw test -Dbrowser.type=firefox
-
-# Run tests in WebKit
 ./mvnw test -Dbrowser.type=webkit
-```
 
-**Execution Modes:**
-
-```bash
-# Run tests in headless mode (faster, no UI)
+# Select headed or headless mode
+./mvnw test -Dbrowser.headless=false
 ./mvnw test -Dbrowser.headless=true
 
-# Run tests in headed mode (see browser)
-./mvnw test -Dbrowser.headless=false
-
-# Run tests with specific environment (dev, qa or prod; qa is the default)
+# Select the production configuration file
 ./mvnw test -Denvironment=prod
 ```
 
 `-Dheadless=true|false` is accepted as a short form of `-Dbrowser.headless`.
+The shipped `dev`, `qa` and `prod` base URLs all point to Playwright's website;
+the environment names do not represent deployed application environments.
 
-**Test Suite Execution:**
+### Configuration overrides
 
-```bash
-# Run main test suite (all tests)
-./mvnw test
-
-# Run example suite (playwright.dev tests only)
-./mvnw test -DsuiteXmlFile=src/test/resources/suites/example-suite.xml
-```
-
-**Test Filtering:**
-
-```bash
-# Run only the tests in a TestNG group
-./mvnw test -Dgroups=smoke
-
-# Run specific test class
-./mvnw test -Dtest=ParallelExecutionTest
-```
-
-A test joins a group through its annotation, e.g. `@Test(groups = "smoke")`. The only test in the `smoke` group out of the box is `PlaywrightDocsNavigationTest#testHomePageNavigation`.
-
-> **Note:** `-Dtest=...` makes Maven run the named classes directly instead of a suite file. The retry and parallel settings are applied by listeners declared in the suite files, so they do not take effect in a `-Dtest` run. Screenshots on failure still work. To run a subset with retries and parallel execution, use a suite file (`-DsuiteXmlFile`) or a group (`-Dgroups`).
-
-### Configuration Overrides
-
-Any setting in the environment's YAML file can be overridden at runtime with a `-D` property named after its YAML path (`section.key`):
+Existing settings in the selected YAML file can be overridden at runtime with a
+`-D` property named after the YAML path (`section.key`). Unknown paths are ignored:
 
 ```bash
 # Override browser settings
@@ -120,15 +109,19 @@ An override must be valid for the setting's type. A non-numeric value for a nume
 
 ## Configuration
 
-The framework uses YAML configuration files located in `src/test/resources/config/` as the single source of truth for all configuration settings.
+YAML files in `src/test/resources/config/` supply the defaults. Command-line
+properties override existing paths before the result is bound to `ConfigModel`.
 
-### Configuration Files
+### Environment files
 
-- `dev.yaml` - Development environment configuration
-- `qa.yaml` - QA environment configuration
-- `prod.yaml` - Production environment configuration
+| File | Initial URL | Browser mode | Parallel methods | Retries |
+| --- | --- | --- | --- | --- |
+| `dev.yaml` | `https://playwright.dev/` | Headed Chromium, 100 ms slow motion | Disabled | Disabled |
+| `qa.yaml` (default) | `https://playwright.dev/` | Headed Chromium | 3 threads | Up to 2, 1000 ms delay |
+| `prod.yaml` | `https://playwright.dev/` | Headless Chromium | 2 threads | Up to 1, 2000 ms delay |
+| `local.yaml` | `about:blank` | Headless Chromium | Disabled | Disabled |
 
-### Example Configuration (qa.yaml)
+### Example configuration (`qa.yaml`)
 
 ```yaml
 environment:
@@ -155,7 +148,7 @@ retry:
   delayBetweenRetries: 1000  # delay in milliseconds between retries
 ```
 
-### Configuration Management
+### Configuration management
 
 The framework uses a configuration management system that:
 
@@ -165,7 +158,7 @@ The framework uses a configuration management system that:
 - Uses TestNG listeners to apply the parallel and retry settings to the suite
 - Provides automatic test retry capabilities
 
-### Test Retry Configuration
+### Retry configuration
 
 Configure retry behavior through YAML:
 
@@ -182,7 +175,7 @@ Or override at runtime:
 ./mvnw test -Dretry.enabled=true -Dretry.maxRetries=3 -Dretry.delayBetweenRetries=2000
 ```
 
-### Parallel Execution
+### Parallel execution
 
 Configure parallel execution through YAML:
 
@@ -201,13 +194,10 @@ Or override at runtime:
 
 ## Reports
 
-Allure reports include:
+### Allure reports
 
-### Allure Reports
-
-Each test run writes Allure result data to `target/allure-results/`:
-
-**Generate and View Allure Reports:**
+Each test run writes Allure result data to `target/allure-results/`.
+Generate or serve the report from the repository root:
 
 ```bash
 # Generate Allure report
@@ -222,13 +212,13 @@ Each test run writes Allure result data to `target/allure-results/`:
 - Test result dashboard with pass/fail statistics
 - Tests grouped by suite, package and by the `@Epic`, `@Feature` and `@Story` annotations
 - Step-by-step execution details from `@Step` methods
-- A screenshot attached to each failed test
+- Failure screenshots when enabled, an active browser page is available and capture succeeds
 - Timeline view of test execution
 - Severity, description and duration of each test
 
 The framework does not write an Allure environment file, so the report’s Environment widget is empty. CI starts with a clean checkout, so deployments do not carry history from earlier runs. The report plugin may retain history between local runs; remove `.allure/` to reset it.
 
-**CI/CD Test Results:**
+### CI reports
 
 The test results are published to GitHub Pages only after successful trusted-branch CI checks. Pull requests upload reports as artifacts without publishing them. You can view them at:
 [Published Allure reports](https://yashwant-das.github.io/qa-java-playwright/)
@@ -237,41 +227,40 @@ The published report is from the latest run on macOS, with a link to the Windows
 
 ### Screenshots
 
-Screenshots are automatically captured and attached to reports:
+`ScreenshotListener` attempts capture for failed tests extending `PlaywrightTest`
+when `screenshot.takeOnFailure=true` and a page is still available. Capture or
+attachment errors are logged; setup failures and browser-free tests may have no
+page to capture.
 
-- **On Failure**: All failed tests automatically capture screenshots
-- **Integration**: Screenshots are embedded in Allure reports
-- **Storage**: `target/screenshots/`, named after the test with a timestamp
-- **Scope**: Full page or viewport only, set by `screenshot.fullPage`
+| Setting or output | Behavior |
+| --- | --- |
+| `screenshot.fullPage` | Selects full-page or viewport capture |
+| `target/screenshots/` | Stores PNGs named with the test and a timestamp |
+| Allure attachments | Embeds successfully captured failure screenshots |
 
 ## Logging
 
-Logging writes to:
+| Output | Location |
+| --- | --- |
+| Current execution log | `logs/playwright-tests.log` |
+| Archived execution logs | `logs/archived/playwright-tests.YYYY-MM-DD.i.log` |
+| Console | Execution events with color-coded levels |
 
-- **Test Execution Logs**: `logs/playwright-tests.log`
-- **Archived Logs**: `logs/archived/playwright-tests.YYYY-MM-DD.i.log`
-- **Console Logging**: Real-time test execution information
-- **Log Levels**: DEBUG, INFO, WARN, ERROR
+### Log rotation
 
-### Log Rotation Policy
+Logs rotate daily or when they reach 10 MB. Archives are retained for up to
+30 days, with a 100 MB total size cap.
 
-- Log files are automatically rotated when:
-  - Size reaches 10MB
-  - A new day starts
-- Retention policy:
-  - Keeps logs for 30 days
-  - Total size cap of 100MB for all archived logs
+### Log levels
 
-### Log Levels
+| Logger | Default level |
+| --- | --- |
+| `com.qaframework.playwright` | DEBUG |
+| TestNG | INFO |
+| Playwright | INFO |
+| Root | INFO |
 
-Default log levels are configured as follows:
-
-- Framework code (com.qaframework.playwright): DEBUG
-- TestNG: INFO
-- Playwright: INFO
-- Root logger: INFO
-
-### Customizing Logging
+### Customizing logging
 
 You can modify logging behavior by editing `src/test/resources/logback.xml`:
 
@@ -282,15 +271,17 @@ You can modify logging behavior by editing `src/test/resources/logback.xml`:
 
 ## Test data
 
-TestDataManager supports the fixture formats and examples below:
+`TestDataManager` loads and caches classpath fixtures. It looks in
+`data/<environment>/` first, then falls back to `data/`. YAML and JSON return
+maps; CSV rows are returned under the `data` key.
 
-### Supported Data Formats
+### Supported data formats
 
 - **YAML**: `playwright-test-data.yaml`
 - **JSON**: `test-data.json`
 - **CSV**: `test-data.csv`
 
-### Example: YAML Data
+### YAML fixture example
 
 ```yaml
 users:
@@ -313,7 +304,7 @@ browsers:
       height: 1080
 ```
 
-### Using Test Data in Tests
+### Using test data in tests
 
 ```java
 @Test
@@ -328,7 +319,7 @@ public void testWithYamlData() {
 }
 ```
 
-### Dynamic Data Generation
+### Dynamic data generation
 
 ```java
 @Test
@@ -360,35 +351,40 @@ and are not redirected merely by changing `environment.baseUrl`.
 
 ## Troubleshooting
 
-### Common Issues
-
-**Browser Not Installed:**
+### Browser not installed
 
 - Ensure the browser is installed before running tests
 - Install Playwright browsers: `./mvnw exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install"`
 
-**Java Version Issues:**
+### Java version issues
 
 - Verify Java version: `java -version` (use JDK 21)
 - Maven may use a different JDK than `java` on your PATH. Check the "Java version" line of `./mvnw -version`, and set `JAVA_HOME` if it is not the JDK you expect
 - Use the supported JDK 21 build toolchain; other JDK majors need separate compatibility evidence. Check `JAVA_HOME` if Maven selects another installation.
 
-**Maven Dependency Issues:**
+### Maven dependency issues
 
 - Clean and rebuild: `./mvnw clean install`
 - Verify the wrapper version: `./mvnw --version`
 
-**Configuration Errors:**
+### Configuration errors
 
 - Verify `src/test/resources/config/*.yaml` files exist and are valid YAML
 - Check `src/test/resources/data/*` files are valid
 
-**Import Errors:**
+### Import errors
 
 - Verify all dependencies are installed: `./mvnw dependency:resolve`
 - Check Java version compatibility
 
-### Getting Help
+### Runtime method mismatch
+
+`NoSuchMethodError` can mean the compiled test classes and runtime library have
+different API signatures. Rebuild with `./mvnw clean test-compile` and check the
+IDE's resolved dependencies if it also writes to `target/test-classes/`. Verify
+in a fresh checkout if the IDE and Maven keep replacing each other's output.
+
+### Getting help
 
 If tests fail, check:
 
@@ -396,8 +392,6 @@ If tests fail, check:
 2. Screenshots in `target/screenshots/` for visual debugging
 3. Allure reports for test execution details
 4. GitHub Actions logs for CI/CD issues
-
-The framework provides clear error messages to help diagnose issues quickly.
 
 ## Quality gates and hooks
 
@@ -436,7 +430,7 @@ roots independently in its clean checkout. Fix and restage any hook edits;
 never bypass a failed gate. CI runs the same hook configuration on all tracked
 files, plus compilation and unit tests on Linux.
 
-Proposed required contexts for owner review:
+Required contexts enforced by the active `main-rule` ruleset:
 
 - `Quality and unit tests`
 - `Run Tests (macos-14)`
@@ -452,194 +446,90 @@ the macOS/Windows report links. CI artifacts expire after three days.
 Weekly Maven and action update PRs are configured in
 [Dependabot](../.github/dependabot.yml). Major upgrades need review. Actions are
 SHA-pinned; test jobs have read-only permissions and bounded runtimes. Account
-protection and deployment-environment changes require owner approval; workflow
-presence alone does not enforce these checks for merging. The public repository
-had no rulesets and an unprotected `main` at audit; no account settings were
-changed. The CodeQL job compiles the test-source framework for analysis and also gates
-report publication; its hosted result is separate evidence, not a locally verified claim.
+protection and deployment-environment changes require owner approval. Following
+the owner's standards-alignment request on 2026-10-25, the active
+[`main-rule` ruleset](https://github.com/yashwant-das/qa-java-playwright/rules/25824925)
+requires the four checks above from GitHub Actions (app 15368), with the branch up
+to date. The existing deletion and force-push protections remain, with no bypass
+actors. `Deploy Report` is not required because PRs intentionally skip publication.
+The CodeQL job compiles the test-source framework for analysis and also gates
+report publication; local verification does not replace its hosted result.
 
-## Standards adoption
+## Compatibility decisions
 
-Target: [repo-standards 073f51ff68ec050f6b3372c46bc3bd4e721a5342](https://github.com/yashwant-das/repo-standards/tree/073f51ff68ec050f6b3372c46bc3bd4e721a5342),
-`complete` documentation profile. Audit: 2026-10-22, default branch `f355b28`.
-Documentation: verified locally. Structure/dependencies and hooks/CI: implemented;
-local checks and outstanding integration evidence are detailed below.
-Publication: pending PR review and merge; local verification is not published
-adoption or enforced merge protection.
+The repository uses the `complete` profile from
+[repo-standards at 073f51ff68ec050f6b3372c46bc3bd4e721a5342](https://github.com/yashwant-das/repo-standards/tree/073f51ff68ec050f6b3372c46bc3bd4e721a5342),
+pinned in [AGENTS.md](../AGENTS.md). Exact dependency versions live in the
+[POM](../pom.xml). The decisions below preserve the existing test engine and
+report integration; they do not waive failed checks.
 
-The original POM and CI targeted Java 17. Retain `release=17`; JDK 21 is the build
-toolchain. Owner: Yashwant Das. Review the target when Java 17 support or a
-dependency’s minimum runtime changes. The shared target of Java 21 is pending
-owner approval rather than silently changing the existing target.
+| Area | Decision and reason | Owner / review trigger |
+| --- | --- | --- |
+| Java | Build and target Java 21 (`release=21`), aligned with the shared baseline and existing CI toolchain. The owner approved replacing the former Java 17 target. | Yashwant Das; review when dependencies or the selected JDK vendor's support require a baseline change. |
+| Allure | Retain adapter 2.35.5: candidate 3.0.0 failed compilation against the attachment API used here. Report 2.46.1 with Maven plugin 3.1.0 preserves the existing report format. | Yashwant Das; review when updating attachment integration or intentionally migrating report formats. |
+| Surefire | Retain 3.5.6: candidate 3.6.0 did not honor the TestNG XML selection in the unit-only check and started a browser example. | Yashwant Das; review when changing the test engine or reevaluating native TestNG suite support. |
+| Browser setup | Surefire sets `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1`. Install package-matched binaries explicitly so test startup does not download browsers. | Yashwant Das; review when changing Playwright startup or browser installation. |
+| README title | Use the owner-approved display title `Playwright Java Accelerator`; the repository identifier remains `qa-java-playwright`. | Yashwant Das; review when renaming the project or changing its identity. |
 
-### Dependency compatibility review
+## Verification status
 
-On 2026-10-22, resolved stable candidates from
-[Maven Central](https://repo.maven.apache.org/maven2/). Exact selected versions
-live in the POM; each Jackson format binding and the Java Playwright binding
-were checked separately. Maven is pinned to 3.10.0 with its official distribution
-checksum; wrapper scripts are upstream 3.3.4.
+Recorded evidence as of 2026-10-26. Local runs used macOS 27.0.1 on Apple Silicon,
+Homebrew JDK 21.0.13 and Maven 3.10.0. Local Java 21 results cover the working tree
+based on `424b193`, with `release=21`. The recorded hosted results cover the
+older revision `424b193`, before the target alignment. Assess each new PR head's
+checks independently; old hosted results do not validate later changes.
 
-Allure TestNG 3.0.0 failed test compilation because it removed the
-`Allure.addAttachment(String, String, InputStream, String)` overload used by the
-failure listener and reporting example. Select the latest compatible 2.x adapter,
-2.35.5. Keep Allure Report on its current 2.x rendering family (2.46.1) through
-the updated Maven plugin 3.1.0, which explicitly supports 2.x reports. This preserves
-the deployed report format and attachment behavior. Owner: Yashwant Das. Review
-when upgrading the attachment integration or moving report formats deliberately.
-This is a compatibility constraint, not authorization to skip failed checks.
+| Check | Recorded result | Date and scope |
+| --- | --- | --- |
+| Configuration units and Checkstyle | 10/10 passed; zero violations | 2026-10-26; fresh temporary copy with Java 21 target |
+| Controlled Chromium smoke | 2/2 passed; zero failures, errors or skips | 2026-10-26; fresh temporary copy with Java 21 target |
+| Compiler target | All 27 generated class files use major version 65 (Java 21) | 2026-10-26; clean build with JDK 21 and `release=21` |
+| Controlled WebKit smoke | 2/2 passed locally | 2026-10-23; namespace-migration verification, before `424b193`; not rerun in the documentation pass |
+| Default/public suite | 36/36 passed; zero failures, errors or skips | 2026-10-26; fresh temporary copy with Java 21 target, default retries/parallelism and headless Chromium |
+| Hosted quality, Windows browser tests and CodeQL | Passed | Rechecked at `424b193`, before the Java 21 target alignment |
+| Hosted macOS browser job | Cancelled after about 25 minutes; not a pass | Rechecked at `424b193`; earlier `0274192` timed out launching WebKit |
+| Local Firefox smoke | Native startup failed; both tests skipped after setup failure | 2026-10-23; Firefox 157.0, Playwright build 1555 on macOS 27.0.1 |
+| Documentation and hooks | Pinned all-file hooks passed; three architecture Java snippets compiled; both Mermaid diagrams rendered; local links and anchors resolved | 2026-10-26 hooks, local links and image rendering; Java snippets and Mermaid diagrams verified 2026-10-25 |
 
-Use JDK 21 for Checkstyle and the build. `--release 17` checks Java 17 API use and
-bytecode; it does not prove every dependency on every JDK. The selected logging,
-TestNG and Allure adapter base classes were inspected for Java 17-compatible
-bytecode. A separate Java 17 execution remains outstanding; no runtime upgrade
-or claim of full Java 17 validation is implied.
+The owner-supplied Allure preview records an earlier local run with 10 passing
+configuration tests and two broken controlled browser checks (83.33% passing).
+It illustrates a failure report; it does not replace the separately recorded
+successful clean-copy tests or establish hosted browser success.
 
-Surefire 3.6.0 switched to JUnit Platform and did not honor the TestNG suite XML
-selection: the supposed unit-only run started a browser example. That candidate
-was stopped and rejected. Keep the latest compatible 3.5.x plugin, 3.5.6, with
-native TestNG suite/listener behavior. Owner: Yashwant Das. Review when deliberately
-migrating the test engine or when native TestNG support changes. This protects
-unit/smoke/public separation, retry listeners and existing default-suite behavior.
+## Known limitations and outstanding checks
 
-The first controlled run exposed Playwright Java’s implicit all-browser download
-inside `Playwright.create()`, even after installing Chromium. The JVM stack and
-child `cli.js install` process confirmed that startup side effect. Surefire now
-sets `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1`; setup installs browser binaries
-explicitly from the pinned Java package. This keeps the controlled run independent
-of download services after setup and makes missing-browser prerequisites visible.
+- **Native browsers:** Local Firefox failed during startup with “Could not find
+  profile folder.” Symptoms match the upstream
+  [macOS 27 Firefox issue](https://github.com/microsoft/playwright/issues/42768)
+  and [Mozilla diagnostic](https://bugzilla.mozilla.org/show_bug.cgi?id=2062988),
+  but the host-specific cause was not proven. Hosted macOS 14 WebKit timed out
+  with a frozen-build warning. Keep both checks enabled. Owner: Yashwant Das;
+  review after relevant host/browser changes or upstream fixes.
+- **Compiled output:** The primary checkout's smoke class expected `Page.route`
+  to return `void`; the selected library and freshly compiled temporary copy used
+  `AutoCloseable`. The writer of the incompatible class was not identified.
+  Follow [runtime method mismatch](#runtime-method-mismatch) if this recurs.
+- **Browser lifecycle:** Suite teardown closes handles visible to its executing
+  thread; cleanup of every worker's thread-local browser handles is not guaranteed.
+  See [execution boundaries](architecture.md#execution-and-boundaries).
+- **Validation scope:** Hosted checks must pass on the revision being merged.
+  Local success does not establish hosted success. Earlier Java 17
+  compilation evidence is historical and does not describe the current target.
+- **Merge readiness:** The macOS check remains required even while its recorded
+  run is cancelled. Resolve the native-browser failure and obtain passing checks
+  for the revision being merged; do not bypass it based on local Chromium success.
 
-### Verification record
+## Repository metadata
 
-Environment: macOS 27.0.1, Apple Silicon, Homebrew JDK 21.0.13; Maven 3.10.0.
-Baseline `f355b28`: 10/10 configuration units passed. The existing public/default
-suite ran 36 tests with retries and parallelism disabled and a 10-second browser
-timeout: 35 passed, `PlaywrightDocsNavigationTest.testSearch` timed out. That run
-is evidence of a baseline failure, not a waived gate.
+The GitHub description is:
 
-After compatible upgrades: the documented default `test -Dbrowser.headless=true`
-run, preserving the YAML’s retry and parallel settings, passed all 36 tests with
-zero failures, errors or skips. The explicit unit-only `clean verify` passed
-10/10 units and Checkstyle with zero violations. Controlled Chromium smoke passed
-2/2 tests with retries disabled, checking form submission, screenshots and
-per-method context storage isolation. No public page selectors were changed.
+> Tests browser flows with Java, Playwright and TestNG, with Allure reports (starter template)
 
-The hooks passed on all maintained files. The initial hook run corrected existing
-trailing whitespace and missing/extra final newlines; source changes outside the
-new smoke package are only those formatting repairs. All relative documentation
-file targets resolve; Markdown and workflow syntax checks passed. Further native
-browser, clean-checkout and hosted results are recorded below as they complete.
+The owner-authorized update was read back on 2026-10-25. It is 92 characters,
+identifies the core tools and includes the starter-template qualifier. Repository
+and artifact identifiers remain `qa-java-playwright`; the display title remains
+`Playwright Java Accelerator`.
 
-### Final review and resumed verification (2026-10-23)
-
-The independent branch review found three issues, all corrected in one pass:
-conflict markers outside merge state, incorrect root-relative suite commands in
-moved guides, and untracked Java drafts affecting staged commits. The marker and
-untracked-draft failures were reproduced before correction. The staged Java
-adapter now selects index paths; full CI analysis remains independent. CodeQL
-also explicitly gates report deployment in the same workflow.
-
-Sixteen real Git commit probes passed in a disposable checkout. They cover valid
-Markdown hard breaks, invalid Markdown, whitespace/newlines, conflict markers,
-strict JSON including rejected comments, YAML/XML syntax, invalid staged Java,
-config-only JSONC parsing, valid JSONC comments, Java/POM commits with an unrelated
-invalid untracked Java draft, and partially staged Markdown/Java that preserve
-unstaged edits. No hooks were bypassed. Shell syntax, documentation file targets
-and root-relative suite paths were checked.
-
-Fresh JDK 21 verification passed the 10 offline units and Checkstyle, controlled
-Chromium (2/2), and controlled WebKit (2/2). Firefox 157.0 / Playwright build 1555
-fails during native startup on this macOS 27.0.1 host with “Could not find profile
-folder”; both browser tests are skipped after setup failure. A second run using
-canonical `/private/tmp` reproduced it. This is a failed local run, not a pass or
-an approved exception. Its symptoms match the upstream
-[macOS 27 Firefox app-data issue](https://github.com/microsoft/playwright/issues/42768)
-and [Mozilla startup diagnostic](https://bugzilla.mozilla.org/show_bug.cgi?id=2062988);
-the host-specific cause has not been independently proven here. No host privacy
-settings were changed. Keep the Firefox CI run enabled on macOS 14 and Windows;
-those hosted results and a future working local Firefox run remain outstanding.
-Owner: Yashwant Das. Review when the upstream issue or host/browser changes.
-
-The earlier clean-checkout verification passed unit/static checks and Chromium
-smoke, then generated an Allure report with 12 passing results and valid result
-JSON. An interrupted exploratory run had left an empty container in the primary
-checkout; the clean checkout had no such parse error. Hosted CI, CodeQL, Windows,
-macOS 14, Java 17 runtime execution and merge protection are separate outstanding
-evidence. No adoption stage is represented as published on `main`.
-
-### Approved namespace migration (2026-10-23)
-
-The owner selected the neutral `com.qaframework.<project>` convention. This
-repository now uses Maven group `com.qaframework` and Java base package
-`com.qaframework.playwright`; the artifact ID stays `qa-java-playwright`.
-All 22 Java source paths/declarations/imports, TestNG listener/class/package
-references, the logger prefix and current documentation were migrated together.
-The earlier source-change description above applies to the initial adoption;
-this follow-up additionally changes package identity without changing test logic.
-
-After a clean compile, all 10 offline unit tests and Checkstyle passed. Controlled
-Chromium and WebKit smoke each passed 2/2; the default/public suite passed 36/36
-with no failures, errors or skips. All-file hooks passed. Every Java package
-matched its source path, all suite class/package references resolved, and active
-sources/configuration/docs contained no obsolete namespace. The prior Firefox
-host limitation and separate Java 17 runtime evidence remain outstanding.
-
-The first namespace commit was correctly blocked by the hook: pre-commit split
-the many Java/config paths into concurrent Maven batches, which collided on
-`target/checkstyle-result.xml`. Mark the Java hook `require_serial: true` so its
-batches share Maven’s output sequentially. This fixes the observed report parse
-failure without bypassing checks or changing style rules; the full staged rename
-is the regression case. No application tests or runtime settings were changed.
-
-### Showcase standards rework (2026-10-25)
-
-Adopted the merged standards revision `073f51ff68ec050f6b3372c46bc3bd4e721a5342`
-for the `complete` profile. Restore landing-page depth: Shields.io badges,
-concrete capabilities, an inline execution diagram, structure/stack summaries,
-template adaptation steps and a local Allure preview. Keep detailed setup and
-rollout history here rather than in the root README. Add the TestNG/context
-lifecycle sequence to the architecture guide and remove unsupported promotional
-wording from maintained guides. Runtime, dependency, hook and workflow files
-were unchanged by this documentation rework.
-
-The preview was generated from a clean build followed by `unit.xml` (10/10) and
-controlled Chromium `smoke.xml` with `-Denvironment=local` (2/2), then
-`./mvnw -o -B -ntp allure:report -Dallure.history.enabled=false`. It is a scoped
-local example, not a screenshot of the full public-site suite or hosted CI.
-The editable Mermaid source stays inline in each Markdown document.
-
-At prior head `0274192`, hosted quality/unit checks, Windows browser tests and
-CodeQL succeeded. macOS 14 timed out after 25 minutes while launching WebKit in
-the controlled smoke suite; its log warns that this host receives a frozen WebKit
-build. The public-site step on that job was not reached. Report deployment was
-skipped as expected for a PR. This is outstanding macOS evidence, not a passing
-matrix or an authorized exception. Keep that check enabled for the new revision.
-The separately documented local Firefox/macOS 27 failure remains outstanding.
-
-Metadata audit: the current description is 97 characters without a trailing
-period, but omits the starter-template qualifier. Proposed description for owner
-review: `Tests browser flows with Java, Playwright and TestNG, with Allure reports (starter template)`.
-Proposed topics, grouped by category/language/tools/technique:
-`test-automation`, `java`, `playwright`, `testng`, `allure-report`, `web-testing`.
-The topic set already matches; no repository metadata or account settings were
-changed. Native GitHub topic display order is not evidence of policy ordering.
-
-Validation for this rework: both inline diagrams rendered successfully with
-Mermaid 12.2.0 in Chromium and were visually inspected; a sequence-label semicolon
-that initially caused a parse error was corrected. All maintained local file
-links and Markdown anchors resolve. The report PNG was inspected after capture
-and shows 12/12 passing cases without unrelated cached history. Markdown lint and
-whole-file hooks use the existing pinned configuration. No new validator or test
-suite was added for the documentation layout.
-
-The pinned standards tree and published report URLs returned HTTP 200 during
-link review. Representative Shields.io badge requests returned HTTP 403 from
-this host, so live badge rendering was not verified here; the README uses the
-standard Shields.io endpoint syntax. New-head GitHub checks must be assessed
-separately from the prior-head results above.
-
-Independent documentation review found no material requirement or source-accuracy
-issues. Its minor public-service-list omission was corrected in the README and
-architecture guide: a bundled parallel example also calls httpbin.org. Review
-scope excluded changes to existing browser teardown, public-site test behavior,
-hosted native execution and account settings; those limits remain explicit above.
+The [historical adoption record](superpowers/history/2026-10-25-standards-adoption.md)
+preserves the original audit, rejected candidates, hook probes, namespace migration
+and documentation work log. Current setup instructions remain in this guide.

@@ -1,39 +1,49 @@
-# qa-java-playwright
+# Playwright Java Accelerator
 
-[![CI](https://img.shields.io/github/actions/workflow/status/yashwant-das/qa-java-playwright/playwright.yml?branch=main&label=CI)](https://github.com/yashwant-das/qa-java-playwright/actions/workflows/playwright.yml)
-[![Allure report](https://img.shields.io/badge/report-Allure-FF6A00)](https://yashwant-das.github.io/qa-java-playwright/)
-[![MIT license](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
-![Java target and build JDK](https://img.shields.io/badge/Java-17_target_%7C_JDK_21-ED8B00)
-![Playwright](https://img.shields.io/badge/browser-Playwright-2EAD33)
-![TestNG](https://img.shields.io/badge/runner-TestNG-FF6A00)
+A Java browser testing framework with Playwright, TestNG and Allure, ready to run.
 
-A Java and TestNG starter framework for browser tests, with page objects,
-YAML configuration, parallel suites, retries, test data and Allure reports.
-Use it as reusable infrastructure or to explore the bundled examples.
-The public-site examples depend on websites this repository does not control;
-the controlled smoke suite provides a first run without those dependencies.
+Use the supplied page objects and examples to build tests for your application.
+Run the smoke suite to verify your setup.
 
-![Allure overview showing 10 configuration tests and two controlled Chromium smoke tests passing](docs/assets/allure-report.png)
+[![CI on main](https://img.shields.io/github/actions/workflow/status/yashwant-das/qa-java-playwright/playwright.yml?branch=main&label=CI&style=flat&logo=githubactions&logoColor=white)](https://github.com/yashwant-das/qa-java-playwright/actions/workflows/playwright.yml)
+[![Allure report](https://img.shields.io/badge/Allure-report-FF6A00?style=flat)](https://yashwant-das.github.io/qa-java-playwright/)
+[![MIT license](https://img.shields.io/badge/license-MIT-blue?style=flat)](LICENSE)
+[![Java 21](https://img.shields.io/badge/Java-21-ED8B00?style=flat&logo=openjdk&logoColor=white)](docs/development.md#setup)
+[![Playwright 1.64.0](https://img.shields.io/badge/Playwright-1.64.0-2EAD33?style=flat)](pom.xml)
+[![TestNG 7.12.0](https://img.shields.io/badge/TestNG-7.12.0-FF6A00?style=flat)](pom.xml)
 
-Local report preview: 10 configuration unit tests and two controlled Chromium
-smoke tests. This preview does not represent the full public-site or CI matrix.
-The report badge links to the latest published `main` report.
+![Playwright Java Accelerator: Java and TestNG tests connected to Playwright browser automation and Allure reports](docs/assets/playwright-java-accelerator-banner.png)
 
-## What this project demonstrates
+## Why it exists
 
-Browser automation needs more than locators: configuration, isolation, reusable
-page objects and useful failure evidence must work together. This starter shows:
+Java teams adopting Playwright still need the infrastructure around browser
+automation: a test runner, environment settings, parallel execution, retries,
+test data and reports. Playwright Java can work with a [Java test runner](https://playwright.dev/java/docs/test-runners)
+such as TestNG or JUnit, but a team
+must connect those pieces before it has a reusable testing framework.
 
-- A fresh browser context and page for each test method, with thread-local
-  Playwright/browser handles reused within a worker.
-- YAML environments and typed `-Dsection.key=value` overrides, including suite
-  parallelism and retry behavior applied by TestNG listeners.
-- Shared page objects and cached YAML/JSON/CSV fixture loading with an
-  environment-specific resource fallback.
-- TestNG results and AspectJ steps in Allure reports, with a listener for
-  failed-test screenshots and separate report publication from trusted CI runs.
-- Separate browser-free configuration units, controlled real-browser smoke
-  tests and examples that contact public websites.
+This project supplies that starting point for teams that already use Java and
+Maven. It brings Playwright's browser API together with TestNG and Allure so you
+can focus on your application's tests rather than rebuilding the same setup.
+The [background article](https://medium.com/@yashwant-das/accelerate-your-java-ui-testing-with-playwright-introducing-a-modern-robust-framework-83b98e323411)
+explains the motivation; the commands and versions here describe this repository.
+
+The framework connects these capabilities:
+
+- **Execution settings without test-code edits:** YAML environments and typed
+  command-line overrides select the browser and configure suite parallelism and retries.
+- **Browser-state isolation:** Each browser test method gets a fresh context and
+  page; thread-local Playwright/browser handles are reused within a worker.
+- **Reusable interactions and data:** Page objects keep page actions together;
+  cached YAML/JSON/CSV fixtures support shared and environment-specific data.
+- **Failure investigation:** Allure collects test results and annotated steps;
+  the failure listener attempts screenshots when enabled and an active page is available.
+- **A first run without public websites:** Controlled smoke tests check form
+  submission and context isolation in a real browser before you try the public examples.
+
+The supplied application examples use public websites and must be replaced for
+your application. [Architecture](docs/architecture.md#execution-and-boundaries)
+explains lifecycle boundaries, including the current worker-cleanup limitation.
 
 ## Architecture
 
@@ -51,22 +61,33 @@ flowchart LR
 ### Project structure
 
 ```text
-src/test/java/com/qaframework/playwright/
-  core/, config/, listeners/     browser lifecycle and execution settings
-  pages/, testdata/              page objects and fixture loading
-  util/, smoke/, examples/       units, controlled checks and public demos
-src/test/resources/              environments, fixtures, suites and logging
-config/, scripts/               Checkstyle rules and staged Java checks
-.mvn/, mvnw, mvnw.cmd            checksum-pinned Maven build
-docs/                           development, architecture and example guides
-.github/                        CI, report deployment and dependency updates
+qa-java-playwright/
+├── src/test/
+│   ├── java/com/qaframework/playwright/
+│   │   ├── core/         # Browser and context lifecycle
+│   │   ├── config/       # Typed configuration model
+│   │   ├── listeners/    # Suite settings, retries and screenshots
+│   │   ├── pages/        # Reusable page objects
+│   │   ├── testdata/     # Fixture loading and generated data
+│   │   ├── util/         # Configuration loading and unit tests
+│   │   ├── smoke/        # Controlled browser checks
+│   │   └── examples/     # Public-site and data examples
+│   └── resources/        # Environments, fixtures, suites and logging
+├── config/               # Checkstyle rules
+├── scripts/              # Staged Java checks
+├── .mvn/wrapper/         # Pinned Maven distribution settings
+├── mvnw                  # Maven Wrapper for macOS/Linux
+├── mvnw.cmd              # Maven Wrapper for Windows
+├── pom.xml               # Dependencies, plugins and Java target
+├── docs/                 # Guides and report preview
+└── .github/              # CI, report deployment and dependency updates
 ```
 
 ### Tech stack
 
 | Layer | Tool / version | Purpose |
 | --- | --- | --- |
-| Build | JDK 21, Java 17 target; Maven 3.10.0 | Preserve the existing API/bytecode target with a pinned build |
+| Build | Java 21; Maven 3.10.0 | Compile and run with a pinned build and matching Java target |
 | Browser automation | Playwright Java 1.64.0 | Package-matched Chromium, Firefox and WebKit binaries |
 | Test runner | TestNG 7.12.0 | Suites, data providers, parallel execution and retry listeners |
 | Configuration / data | Jackson 2.22.4 | YAML configuration and YAML/JSON/CSV fixtures |
@@ -90,7 +111,7 @@ and [hook configuration](.pre-commit-config.yaml) are the version sources of tru
 
 ## Quickstart
 
-Use JDK 21 with `JAVA_HOME` set. The existing Java 17 bytecode target is retained.
+Use JDK 21 with `JAVA_HOME` set. The framework targets Java 21.
 Git and internet access are needed for the initial Maven and browser downloads.
 Run these commands from the repository root after cloning:
 
@@ -110,7 +131,7 @@ See [setup](docs/development.md#setup) for JDK selection and platform details.
 ## Usage
 
 ```bash
-# All existing examples, against public websites
+# Default suite: configuration units and examples, including public websites
 ./mvnw test -Dbrowser.headless=true
 
 # Selected public-site suite, with retry and parallel listeners
@@ -136,11 +157,20 @@ Playwright package before selecting them with `-Dbrowser.type`.
 static analysis. The smoke suite additionally proves real-browser behavior on
 controlled pages. The public-site suite exercises Playwright docs, Selenium’s web form, example.com and httpbin.org.
 CI runs quality/unit checks on Linux, controlled checks in all three browsers and
-public examples on macOS/Windows, plus CodeQL. Native-host execution remains
-separate evidence; a compile or discovered test count proves neither.
+public examples on macOS/Windows, plus CodeQL. These are configured checks;
+current results and outstanding native-browser failures are recorded in
+[Development](docs/development.md#verification-status).
 Allure data is written to `target/allure-results/`; the generated HTML lives in
 `target/site/allure-maven-plugin/`. CI uploads reports for three days. Successful
 trusted `main` runs publish the [macOS report and Windows link](https://yashwant-das.github.io/qa-java-playwright/).
+
+![Allure example showing 10 passing configuration tests and two broken controlled browser checks, with an 83.33 percent pass rate](docs/assets/allure-report-new.png)
+
+Earlier local report: 10 configuration tests passed and two controlled browser
+checks were marked broken (83.33% passing). This screenshot does not represent
+the separate successful clean-copy verification or the hosted CI matrix; see
+[verification status](docs/development.md#verification-status) for that evidence.
+The report badge links to the latest published `main` report.
 
 [Quality gates](docs/development.md#quality-gates-and-hooks) includes Markdown,
 text/config checks and pre-commit setup.
@@ -150,6 +180,7 @@ text/config checks and pre-commit setup.
 - [Development](docs/development.md): setup, configuration, test commands, reports and troubleshooting.
 - [Architecture](docs/architecture.md): layout, execution flow, shared layers and boundaries.
 - [Examples](docs/examples.md): the public-site demo catalog, kept separate for quick lookup.
+- Historical records: [adoption history](docs/superpowers/history/2026-10-25-standards-adoption.md) and [implementation plans](docs/superpowers/plans/); retained for traceability, not current setup instructions.
 
 ## License
 

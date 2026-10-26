@@ -10,7 +10,7 @@
     <name>Web Playwright Java Framework</name>
 
     <properties>
-        <maven.compiler.release>17</maven.compiler.release>
+        <maven.compiler.release>21</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <!-- Dependency versions -->
         <playwright.version>1.64.0</playwright.version>
@@ -112,7 +112,7 @@
 
     <build>
         <plugins>
-            <!-- Build with JDK 21 while retaining the existing Java 17 API/bytecode target. -->
+            <!-- Build and target Java 21, matching the CI toolchain. -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
