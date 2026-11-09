@@ -16,18 +16,18 @@
         <playwright.version>1.64.0</playwright.version>
         <testng.version>7.12.0</testng.version>
         <allure.version>2.35.5</allure.version>
-        <aspectj.version>1.9.26</aspectj.version>
+        <aspectj.version>1.9.27</aspectj.version>
         <slf4j.version>2.0.20</slf4j.version>
-        <logback.version>1.6.5</logback.version>
+        <logback.version>1.6.6</logback.version>
         <assertj.version>3.27.7</assertj.version>
         <jackson.version>2.22.4</jackson.version>
         <lombok.version>1.18.48</lombok.version>
         <!-- Plugin versions -->
         <maven.compiler.plugin.version>3.16.0</maven.compiler.plugin.version>
-        <maven.surefire.plugin.version>3.5.6</maven.surefire.plugin.version>
+        <maven.surefire.plugin.version>3.6.1</maven.surefire.plugin.version>
         <allure.maven.plugin.version>3.1.0</allure.maven.plugin.version>
         <allure.report.version>2.46.1</allure.report.version>
-        <checkstyle.version>14.3.0</checkstyle.version>
+        <checkstyle.version>14.4.0</checkstyle.version>
         <!-- TestNG suite to run; override with -DsuiteXmlFile=path/to/suite.xml -->
         <suiteXmlFile>src/test/resources/suites/testng.xml</suiteXmlFile>
     </properties>
